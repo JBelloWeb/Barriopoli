@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+
+@font-face {
+    font-family: 'Rosario';
+    src: url('/fonts/Rosario-Bold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@source '../js/**/*.vue';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-rosario: 'Rosario', sans-serif;
+}
+
+/* Fuerza a todo el sitio a usar la tipografía */
+html, body {
+    font-family: 'Rosario', sans-serif !important;
+}

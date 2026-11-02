@@ -23,6 +23,8 @@
         "@vitejs/plugin-vue": "^6.0.10",
         "leaflet": "^1.9.4",
         "maplibre-gl": "^6.16.0",
+        "maplibre-gl-three": "^3.0.2",
+        "three": "^0.186.1",
         "vue": "^3.5.44"
     }
 }

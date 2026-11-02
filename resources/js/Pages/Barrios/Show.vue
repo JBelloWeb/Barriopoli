@@ -4,6 +4,8 @@ import * as maplibregl from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { bbox, mask } from '@turf/turf'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 const props = defineProps({
     barrio: { type: Object, required: true },
@@ -21,6 +23,108 @@ const parseGeoJson = (data) => {
     return typeof data === 'string' ? JSON.parse(data) : data
 }
 
+// Custom Layer para cargar pines 3D con Three.js
+const ALTURA_PIN_M = 40
+const BASE_ALTITUD_M = 10  // sube respecto a los 40 m de la extrusión para evitar z-fighting
+const COLLIDER_RADIO_M = 28      // ancho clicable (el pin mide ~40 m de ancho)
+const COLLIDER_EXTRA_M = 25      // cuánto sobresale por arriba y por abajo del pin
+
+const crearCapaEventos3D = (features, modelUrl) => {
+    let camera, scene, renderer, mapInstance
+    const items = []
+    const rotX = new THREE.Matrix4().makeRotationX(Math.PI / 2)
+
+    return {
+        id: 'eventos-3d',
+        type: 'custom',
+        renderingMode: '3d',
+
+        onAdd(mapCtx, gl) {
+            mapInstance = mapCtx
+            camera = new THREE.Camera()
+            scene = new THREE.Scene()
+
+            scene.add(new THREE.AmbientLight(0xffffff, 2.5))
+            const dir = new THREE.DirectionalLight(0xffffff, 2.0)
+            dir.position.set(0, -70, 100).normalize()
+            scene.add(dir)
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: mapCtx.getCanvas(),
+                context: gl,
+                antialias: true
+            })
+            renderer.autoClear = false
+
+            new GLTFLoader().load(
+                modelUrl,
+                (gltf) => {
+                    const box = new THREE.Box3().setFromObject(gltf.scene)
+                    const size = box.getSize(new THREE.Vector3())
+                    const center = box.getCenter(new THREE.Vector3())
+                    const k = ALTURA_PIN_M / (size.y || 1)
+
+                    features.forEach((f) => {
+                        const [lng, lat] = f.geometry.coordinates
+                        const mc = maplibregl.MercatorCoordinate.fromLngLat([lng, lat], BASE_ALTITUD_M)
+                        const s = mc.meterInMercatorCoordinateUnits() * k
+
+                        const pin = gltf.scene.clone(true)
+                        pin.position.set(-center.x, -box.min.y, -center.z)
+
+                        // rotator: gira el pin sobre su propio eje vertical
+                        const rotator = new THREE.Group()
+                        rotator.add(pin)
+
+                        const group = new THREE.Group()
+                        group.add(rotator)
+                        group.visible = false
+                        group.traverse((o) => { o.frustumCulled = false })
+                        scene.add(group)
+
+                        // T · S · R en doble precisión (orden del ejemplo oficial)
+                        const transform = new THREE.Matrix4()
+                            .makeTranslation(mc.x, mc.y, mc.z)
+                            .scale(new THREE.Vector3(s, -s, s))
+                            .multiply(rotX)
+
+                        items.push({ group, rotator, transform })
+                    })
+                    mapInstance.triggerRepaint()
+                },
+                undefined,
+                (err) => console.error('Error cargando el modelo 3D:', err)
+            )
+        },
+
+        render(gl, args) {
+            if (!items.length) return
+
+            const mat = (Array.isArray(args) || ArrayBuffer.isView(args))
+                ? args
+                : (args.defaultProjectionData?.mainMatrix ?? args.modelViewProjectionMatrix)
+
+            const mapMatrix = new THREE.Matrix4().fromArray(mat)
+            const bearing = (mapInstance.getBearing() * Math.PI) / 180
+
+            renderer.resetState()
+            for (const it of items) {
+                it.rotator.rotation.y = bearing
+                camera.projectionMatrix.copy(mapMatrix).multiply(it.transform)
+                it.group.visible = true
+                renderer.render(scene, camera)
+                it.group.visible = false
+            }
+        },
+
+        onRemove() {
+            items.length = 0
+            scene?.clear()
+            renderer?.dispose()
+        }
+    }
+}
+
 const cargarCapas = () => {
     if (!map) return
 
@@ -28,6 +132,16 @@ const cargarCapas = () => {
     const eventosData = parseGeoJson(props.eventosGeoJson)
 
     if (!barrioGeoJson) return
+
+
+    const barrioBbox = bbox(barrioGeoJson);
+    const padding = 0.015
+    const maxBounds = [
+        [barrioBbox[0] - padding, barrioBbox[1] - padding], //Suroeste [lng, lat]
+        [barrioBbox[2] + padding, barrioBbox[3] + padding] //Noreste [lng, lat]
+    ]
+    
+    map.setMaxBounds(maxBounds);
 
     // 1. Capas del Barrio y Máscara
     map.addSource('barrio', { type: 'geojson', data: barrioGeoJson })
@@ -37,13 +151,18 @@ const cargarCapas = () => {
         id: 'mascara-exteriores',
         type: 'fill',
         source: 'mascara',
-        paint: { 'fill-color': '#8e66cc', 'fill-opacity': 0.5 },
+        paint: { 'fill-color': '#8e66cc', 'fill-opacity': 0.9 },
     })
     map.addLayer({
-        id: 'barrio-relleno',
-        type: 'fill',
+        id: 'barrio-3d-extrusion',
+        type: 'fill-extrusion',
         source: 'barrio',
-        paint: { 'fill-color': '#ffdeb6', 'fill-opacity': 0.15 },
+        paint: {
+            'fill-extrusion-color': '#ffdeb6', // Color de resalte
+            'fill-extrusion-height': 10,        // Altura en metros[cite: 2]
+            'fill-extrusion-base': 0,
+            'fill-extrusion-opacity': 0.15
+        }
     })
     map.addLayer({
         id: 'barrio-borde',
@@ -53,34 +172,18 @@ const cargarCapas = () => {
     })
 
     // 2. Capas de Eventos (Puntos interactivos)
-    if (eventosData && eventosData.features && eventosData.features.length > 0) {
-        map.addSource('eventos', {
-            type: 'geojson',
-            data: eventosData
-        })
+    if (eventosData?.features?.length > 0) {
+    map.addLayer(crearCapaEventos3D(eventosData.features, '/models/pin.glb'))
 
-        // Borde blanco exterior
-        map.addLayer({
-            id: 'eventos-circulo-borde',
-            type: 'circle',
-            source: 'eventos',
-            paint: {
-                'circle-radius': 9,
-                'circle-color': '#ffffff',
-                'circle-opacity': 0.9
-            }
-        })
-
-        // Punto rojo interior
+        // Capa invisible para recibir los clics sobre el pin 3D
+        map.addSource('eventos', { type: 'geojson', data: eventosData })
         map.addLayer({
             id: 'eventos-puntos',
             type: 'circle',
             source: 'eventos',
             paint: {
-                'circle-radius': 6,
-                'circle-color': '#ef4444',
-                'circle-stroke-width': 1,
-                'circle-stroke-color': '#ffffff'
+                'circle-radius': 18,
+                'circle-opacity': 0
             }
         })
 
@@ -125,7 +228,12 @@ onMounted(() => {
         container: contenedor.value,
         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
         center: [-58.3816, -34.6037],
-        zoom: 11,
+        zoom: 13,
+        pitch: 50,
+        bearing: -10,
+        minZoom: 12,
+        maxZoom: 18,
+        canvasContextAttributes: { antialias: true },
     })
 
     map.on('load', cargarCapas)
@@ -134,11 +242,15 @@ onMounted(() => {
 // Soporte para navegación Inertia sin recargar la página
 watch(() => props.barrio, () => {
     if (map && map.isStyleLoaded()) {
-        if (map.getLayer('eventos-puntos')) map.removeLayer('eventos-puntos')
-        if (map.getLayer('eventos-circulo-borde')) map.removeLayer('eventos-circulo-borde')
-        if (map.getSource('eventos')) map.removeSource('eventos')
+        // Remover capas de modelos 3D dinámicos
+        const layers = map.getStyle().layers
+        if (map.getLayer('eventos-3d')) map.removeLayer('eventos-3d')
+if (map.getLayer('eventos-puntos')) map.removeLayer('eventos-puntos')
+if (map.getSource('eventos')) map.removeSource('eventos')
+        
+        // Limpiar capas del barrio
+        if (map.getLayer('barrio-3d-extrusion')) map.removeLayer('barrio-3d-extrusion')
         if (map.getLayer('barrio-borde')) map.removeLayer('barrio-borde')
-        if (map.getLayer('barrio-relleno')) map.removeLayer('barrio-relleno')
         if (map.getLayer('mascara-exteriores')) map.removeLayer('mascara-exteriores')
         if (map.getSource('barrio')) map.removeSource('barrio')
         if (map.getSource('mascara')) map.removeSource('mascara')

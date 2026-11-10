@@ -1,5 +1,5 @@
 <script setup>
-import BarrioSelector from '@/Components/BarrioSelector.vue';
+import BarrioSelector from '@/components/BarrioSelector.vue';
 import { ref, onMounted } from 'vue';
 import * as maplibregl from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'

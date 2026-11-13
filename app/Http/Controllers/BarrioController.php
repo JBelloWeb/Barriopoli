@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barrio;
+use App\Models\Categoria;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +22,7 @@ class BarrioController extends Controller
 
         $eventosGeoJson = [
             'type' => 'FeatureCollection',
-            'features' => $barrio->eventos->map(fn ($evento) => [
+            'features' => $barrio->eventos()->with('categoria')->get()->map(fn ($evento) => [
                 'type' => 'Feature',
                 'geometry' => [
                     'type' => 'Point',
@@ -32,6 +33,10 @@ class BarrioController extends Controller
                     'titulo' => $evento->titulo,
                     'direccion' => $evento->direccion,
                     'fecha' => $evento->fecha,
+                    'categoria_id' => $evento->categoria_id,
+                    'categoria' => $evento->categoria->nombre,
+                    'icono' => $evento->categoria->icono,
+                    'color' => $evento->categoria->color,
                 ],
             ])->values(),
         ];
@@ -41,6 +46,7 @@ class BarrioController extends Controller
             'eventosGeoJson' => $eventosGeoJson,
             // El buscador del layout también la usa en esta página.
             'barrios' => $this->listaBarrios(),
+            'categorias' => Inertia::once(fn () => Categoria::activas()->get(['id', 'nombre', 'color', 'icono'])),
         ]);
     }
 

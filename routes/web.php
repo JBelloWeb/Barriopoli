@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\EventoController;
+use App\Http\Controllers\Moderacion\CategoriaController;
 use App\Http\Controllers\Moderacion\PanelController;
 use App\Http\Controllers\Moderacion\SolicitudController;
 use App\Http\Controllers\PerfilController;
@@ -30,4 +31,8 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
     Route::get('/', [PanelController::class, 'index'])->name('index');
     Route::post('/solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar'])->name('solicitudes.aprobar');
     Route::post('/solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar'])->name('solicitudes.rechazar');
+
+    Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+    Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
+    Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
 });

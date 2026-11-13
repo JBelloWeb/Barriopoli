@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Evento;
 use App\Models\Barrio;
+use App\Models\Categoria;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class EventoController extends Controller
 {
@@ -17,6 +19,7 @@ class EventoController extends Controller
     {
         return Inertia::render('Eventos/Create', [
             'barrios' => Barrio::select('id', 'nombre')->get(),
+            'categorias' => Categoria::activas()->get(['id', 'nombre', 'icono']),
         ]);
     }
 
@@ -28,7 +31,7 @@ class EventoController extends Controller
         $validated = $request->validate([
             'barrio_id' => 'required|exists:barrios,id',
             'titulo'    => 'required|string|max:255',
-            'categoria' => 'required|string|max:255',
+            'categoria_id' => ['required', Rule::exists('categorias', 'id')->where('activa', true)],
             'direccion' => 'required|string',
             'fecha'     => 'required|date',
         ]);
@@ -64,6 +67,7 @@ class EventoController extends Controller
         return Inertia::render('Eventos/Edit', [
             'evento'  => $evento,
             'barrios' => Barrio::select('id', 'nombre')->get(),
+            'categorias' => Categoria::activas()->get(['id', 'nombre', 'icono']),
         ]);
     }
 
@@ -75,7 +79,7 @@ class EventoController extends Controller
         $validated = $request->validate([
             'barrio_id' => 'required|exists:barrios,id',
             'titulo'    => 'required|string|max:255',
-            'categoria' => 'required|string|max:255',
+            'categoria_id' => ['required', Rule::exists('categorias', 'id')->where('activa', true)],
             'direccion' => 'required|string',
             'fecha'     => 'required|date',
         ]);

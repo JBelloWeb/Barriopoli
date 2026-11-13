@@ -8,15 +8,37 @@ const BASE_ALTITUD_M = 10  // sube respecto a los 40 m de la extrusión para evi
 const COLLIDER_RADIO_M = 28      // ancho clicable (el pin mide ~40 m de ancho)
 const COLLIDER_EXTRA_M = 25      // cuánto sobresale por arriba y por abajo del pin
 
+// pin.glb tiene un único material sin texturas: se tiñe cambiando material.color.
+const COLOR_POR_DEFECTO = '#8e66cc'
+
 export const crearCapaEventos3D = (features, modelUrl) => {
     let camera, scene, renderer, mapInstance
     const items = []
     const rotX = new THREE.Matrix4().makeRotationX(Math.PI / 2)
 
+    // Un material por color, no por pin: el modelo tiene 91 mallas y clonarlo
+    // por malla multiplicaría la memoria sin ninguna diferencia visual.
+    const materiales = new Map()
+    let categoriasVisibles = null // null = todas
+
+    const materialPara = (color, base) => {
+        if (!materiales.has(color)) {
+            const material = base.clone()
+            material.color.set(color)
+            materiales.set(color, material)
+        }
+        return materiales.get(color)
+    }
+
     return {
         id: 'eventos-3d',
         type: 'custom',
         renderingMode: '3d',
+
+        setCategoriasVisibles(ids) {
+            categoriasVisibles = ids.length ? new Set(ids) : null
+            mapInstance?.triggerRepaint()
+        },
 
         onAdd(mapCtx, gl) {
             mapInstance = mapCtx
@@ -50,6 +72,8 @@ export const crearCapaEventos3D = (features, modelUrl) => {
 
                         const pin = gltf.scene.clone(true)
                         pin.position.set(-center.x, -box.min.y, -center.z)
+                        const color = f.properties.color ?? COLOR_POR_DEFECTO
+                        pin.traverse((o) => { if (o.isMesh) o.material = materialPara(color, o.material) })
 
                         // rotator: gira el pin sobre su propio eje vertical
                         const rotator = new THREE.Group()
@@ -67,7 +91,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
                             .scale(new THREE.Vector3(s, -s, s))
                             .multiply(rotX)
 
-                        items.push({ group, rotator, transform })
+                        items.push({ group, rotator, transform, categoriaId: f.properties.categoria_id })
                     })
                     mapInstance.triggerRepaint()
                 },
@@ -88,6 +112,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
 
             renderer.resetState()
             for (const it of items) {
+                if (categoriasVisibles && !categoriasVisibles.has(it.categoriaId)) continue
                 it.rotator.rotation.y = bearing
                 camera.projectionMatrix.copy(mapMatrix).multiply(it.transform)
                 it.group.visible = true
@@ -98,6 +123,8 @@ export const crearCapaEventos3D = (features, modelUrl) => {
 
         onRemove() {
             items.length = 0
+            materiales.forEach((m) => m.dispose())
+            materiales.clear()
             scene?.clear()
             renderer?.dispose()
         }

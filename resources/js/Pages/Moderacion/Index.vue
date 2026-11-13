@@ -2,9 +2,13 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import CategoriasPanel from '@/components/moderacion/CategoriasPanel.vue'
 
 defineOptions({ layout: AppLayout })
-defineProps({ solicitudes: { type: Array, default: () => [] } })
+defineProps({
+  solicitudes: { type: Array, default: () => [] },
+  categorias: { type: Array, default: () => [] },
+})
 
 const pestana = ref('solicitudes')
 
@@ -23,7 +27,10 @@ const rechazar = (id) => {
       <button role="tab" :aria-selected="pestana === 'solicitudes'" class="min-h-11 rounded-full px-4" :class="pestana === 'solicitudes' ? 'bg-violeta-oscuro text-white' : 'bg-gray-100'" @click="pestana = 'solicitudes'">
         Solicitudes ({{ solicitudes.length }})
       </button>
-      <!-- PLAN-02: pestaña Categorías. PLAN-03: pestaña Eventos. -->
+      <button role="tab" :aria-selected="pestana === 'categorias'" class="min-h-11 rounded-full px-4" :class="pestana === 'categorias' ? 'bg-violeta-oscuro text-white' : 'bg-gray-100'" @click="pestana = 'categorias'">
+        Categorías ({{ categorias.length }})
+      </button>
+      <!-- PLAN-03: pestaña Eventos. -->
     </div>
 
     <ul v-if="pestana === 'solicitudes'" class="mt-4 space-y-3">
@@ -39,5 +46,7 @@ const rechazar = (id) => {
       </li>
       <li v-if="!solicitudes.length" class="text-gray-600">No hay solicitudes pendientes.</li>
     </ul>
+
+    <CategoriasPanel v-if="pestana === 'categorias'" :categorias="categorias" />
   </div>
 </template>

@@ -11,21 +11,17 @@ class BarrioController extends Controller
     public function index(): Response
     {
         return Inertia::render('Barrios/Index', [
-            'barrios' => Barrio::orderBy('comuna')->get(['id', 'nombre', 'slug', 'comuna']),
+            'barrios' => $this->listaBarrios(),
         ]);
     }
 
-  public function show(string $slug)
-{
-    $barrio = Barrio::where('slug', $slug)->firstOrFail();
+    public function show(string $slug): Response
+    {
+        $barrio = Barrio::where('slug', $slug)->firstOrFail();
 
-    // Obtener los eventos del barrio (retorna colección vacía si no hay registros)
-    $eventos = $barrio->eventos; 
-
-    $eventosGeoJson = [
-        'type' => 'FeatureCollection',
-        'features' => $eventos->map(function ($evento) {
-            return [
+        $eventosGeoJson = [
+            'type' => 'FeatureCollection',
+            'features' => $barrio->eventos->map(fn ($evento) => [
                 'type' => 'Feature',
                 'geometry' => [
                     'type' => 'Point',
@@ -37,13 +33,23 @@ class BarrioController extends Controller
                     'direccion' => $evento->direccion,
                     'fecha' => $evento->fecha,
                 ],
-            ];
-        })->values(), // values() asegura que el array se mantenga ordenado e indexado para JSON
-    ];
+            ])->values(),
+        ];
 
-    return Inertia::render('Barrios/Show', [
-        'barrio' => $barrio,
-        'eventosGeoJson' => $eventosGeoJson, // Siempre enviará la clave, aunque features sea []
-    ]);
-}
+        return Inertia::render('Barrios/Show', [
+            'barrio' => $barrio,
+            'eventosGeoJson' => $eventosGeoJson,
+            // El buscador del layout también la usa en esta página.
+            'barrios' => $this->listaBarrios(),
+        ]);
+    }
+
+    /**
+     * Lista para el buscador. `once`: el cliente la conserva y el servidor no
+     * la reenvía al navegar entre barrios (los 48 barrios no cambian).
+     */
+    private function listaBarrios()
+    {
+        return Inertia::once(fn () => Barrio::orderBy('nombre')->get(['id', 'nombre', 'slug', 'comuna']));
+    }
 }

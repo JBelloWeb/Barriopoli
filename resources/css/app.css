@@ -1,21 +1,49 @@
 @import 'tailwindcss';
 
-@font-face {
-    font-family: 'Rosario';
-    src: url('/fonts/Rosario-Bold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 @source '../js/**/*.vue';
 @source '../views/**/*.blade.php';
 
-@theme {
-    --font-rosario: 'Rosario', sans-serif;
+@font-face {
+    font-family: 'Rosario';
+    src: url('/fonts/Rosario-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
 }
 
-/* Fuerza a todo el sitio a usar la tipografía */
+@font-face {
+    font-family: 'Rosario';
+    src: url('/fonts/Rosario-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@theme {
+    --font-rosario: 'Rosario', sans-serif;
+    --color-violeta: #8e66cc;
+    --color-violeta-oscuro: #5f3f96;
+    --color-crema: #ffdeb6;
+    --color-tinta: #1f2428;
+}
+
+/* Tailwind v4 usa currentColor como color de borde por defecto; se vuelve al gris de v3. */
+@layer base {
+    *, ::after, ::before, ::backdrop, ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
 html, body {
-    font-family: 'Rosario', sans-serif !important;
+    font-family: 'Rosario', sans-serif;
+    color: var(--color-tinta);
+    overscroll-behavior-y: none;
+}
+
+.sheet-enter-active, .sheet-leave-active { transition: transform 220ms ease; }
+.sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+
+.aviso { animation: aviso-salida 4s forwards; }
+
+@keyframes aviso-salida {
+    0%, 85% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
 }

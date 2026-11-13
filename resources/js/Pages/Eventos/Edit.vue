@@ -3,14 +3,15 @@ import { useForm } from '@inertiajs/vue3'
 
 const props = defineProps({
     evento: Object,
-    barrios: Array
+    barrios: Array,
+    categorias: Array,
 })
 
 // Inicializamos el formulario con los datos existentes del evento
 const form = useForm({
     barrio_id: props.evento.barrio_id,
     titulo: props.evento.titulo,
-    categoria: props.evento.categoria,
+    categoria_id: props.evento.categoria_id,
     direccion: props.evento.direccion,
     fecha: props.evento.fecha,
 })
@@ -41,7 +42,12 @@ const submit = () => {
 
             <div>
                 <label class="block text-sm font-medium">Categoría:</label>
-                <input type="text" v-model="form.categoria" class="w-full border rounded p-2" required />
+                <select v-model="form.categoria_id" class="w-full border rounded p-2" required>
+                    <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
+                        {{ categoria.icono }} {{ categoria.nombre }}
+                    </option>
+                </select>
+                <p v-if="form.errors.categoria_id" class="mt-1 text-sm text-red-700">{{ form.errors.categoria_id }}</p>
             </div>
 
             <div>

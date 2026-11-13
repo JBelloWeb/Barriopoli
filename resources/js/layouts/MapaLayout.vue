@@ -8,6 +8,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { bbox, mask } from '@turf/turf'
 import BarrioSelector from '@/components/BarrioSelector.vue'
+import CategoriaChips from '@/components/CategoriaChips.vue'
 import { crearCapaEventos3D } from '@/mapa/capaEventos3D.js'
 
 maplibregl.setWorkerUrl(workerUrl)
@@ -22,9 +23,18 @@ const barrios = computed(() => page.props.barrios ?? [])
 const barrio = computed(() => page.props.barrio ?? null)
 const eventos = computed(() => page.props.eventosGeoJson ?? null)
 
+// Filtro por categoría. Vive en el layout persistente, así que se conserva al cambiar de barrio.
+const seleccion = ref([])
+const categoriasDelBarrio = computed(() => {
+    const presentes = new Set((parsear(eventos.value)?.features ?? []).map((f) => f.properties.categoria_id))
+    // También las seleccionadas: si no, un filtro activo sin eventos en este barrio no se podría quitar.
+    return (page.props.categorias ?? []).filter((c) => presentes.has(c.id) || seleccion.value.includes(c.id))
+})
+
 const contenedor = ref(null)
 let map = null
 let popup = null
+let capaEventos = null
 
 const parsear = (dato) => (typeof dato === 'string' ? JSON.parse(dato) : dato)
 
@@ -60,11 +70,14 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     map.addLayer({ id: 'barrio-borde', type: 'line', source: 'barrio', paint: { 'line-color': '#ffdeb6', 'line-width': 3 } })
 
     const features = parsear(datosEventos)?.features ?? []
+    capaEventos = null
     if (features.length) {
-        map.addLayer(crearCapaEventos3D(features, '/models/pin.glb'))
+        capaEventos = crearCapaEventos3D(features, '/models/pin.glb')
+        map.addLayer(capaEventos)
         map.addSource('eventos', { type: 'geojson', data: { type: 'FeatureCollection', features } })
         // Capa invisible que recibe los clics sobre los pines 3D.
         map.addLayer({ id: 'eventos-puntos', type: 'circle', source: 'eventos', paint: { 'circle-radius': 18, 'circle-opacity': 0 } })
+        aplicarFiltro(seleccion.value)
     }
 
     // Se liberan los límites para que la cámara pueda viajar desde el barrio anterior;
@@ -83,6 +96,16 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     })
 }
 
+// Se filtra en dos capas: el pin 3D (Three.js) y la zona táctil (circle de MapLibre).
+// Filtrando solo una quedarían pines que no responden o toques sobre pines ocultos.
+const aplicarFiltro = (ids) => {
+    capaEventos?.setCategoriasVisibles(ids)
+    if (map?.getLayer('eventos-puntos')) {
+        map.setFilter('eventos-puntos', ids.length ? ['in', ['get', 'categoria_id'], ['literal', ids]] : null)
+    }
+    popup?.remove()
+}
+
 const sincronizar = () => {
     if (!map?.isStyleLoaded()) return
     limpiarCapas()
@@ -92,7 +115,7 @@ const sincronizar = () => {
 
 // El contenido del popup se arma con textContent: título y dirección los cargan
 // usuarios, e insertarlos con setHTML permitiría inyectar scripts (XSS).
-const crearContenidoPopup = ({ id, titulo, direccion, fecha }) => {
+const crearContenidoPopup = ({ id, titulo, direccion, fecha, categoria, icono }) => {
     const raiz = document.createElement('div')
     raiz.className = 'font-rosario p-1'
     const linea = (etiqueta, texto, clase) => {
@@ -102,6 +125,7 @@ const crearContenidoPopup = ({ id, titulo, direccion, fecha }) => {
         raiz.append(el)
         return el
     }
+    if (categoria) linea('span', `${icono ?? ''} ${categoria}`.trim(), 'block text-xs font-bold text-violeta-oscuro')
     linea('strong', titulo ?? 'Evento', 'block text-sm text-tinta')
     linea('span', direccion, 'block text-xs text-gray-600')
     linea('small', fecha, 'block text-xs text-gray-400')
@@ -141,12 +165,15 @@ onMounted(() => {
         maxZoom: 18,
         canvasContextAttributes: { antialias: true },
     })
+    // Solo en desarrollo: acceso al mapa desde la consola y los tests E2E. Vite lo elimina del build.
+    if (import.meta.env.DEV) window.__mapa = map
     map.on('load', sincronizar)
     map.on('click', alHacerClick)
     map.on('mousemove', alMoverMouse)
 })
 
 watch(() => barrio.value?.id ?? null, sincronizar)
+watch(seleccion, aplicarFiltro)
 
 onBeforeUnmount(() => {
     map?.remove()
@@ -159,6 +186,12 @@ onBeforeUnmount(() => {
         <header class="relative z-20 shrink-0 border-b border-gray-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <BarrioSelector :barrios="barrios" :actual="barrio" @selected="irABarrio" />
         </header>
+        <CategoriaChips
+            v-if="barrio && categoriasDelBarrio.length"
+            v-model="seleccion"
+            :categorias="categoriasDelBarrio"
+            class="relative z-10 shrink-0 border-b border-gray-200 bg-white"
+        />
         <div class="relative min-h-0 flex-1">
             <!-- El absolute va en un envoltorio: maplibre-gl.css fuerza position:relative en
                  .maplibregl-map y, al no estar en un @layer, le gana a las utilidades de Tailwind v4. -->

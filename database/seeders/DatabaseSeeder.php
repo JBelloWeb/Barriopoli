@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(BarrioSeeder::class);
+        $this->call(CategoriaSeeder::class);
         $this->call(ModeradorSeeder::class);
     }
 }

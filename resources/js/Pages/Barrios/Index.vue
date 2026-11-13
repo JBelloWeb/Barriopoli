@@ -5,6 +5,9 @@ import * as maplibregl from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue'
+
+defineOptions({ layout: AppLayout })
 
 let map = null;
 maplibregl.setWorkerUrl(workerUrl)

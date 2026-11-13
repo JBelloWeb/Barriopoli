@@ -6,6 +6,9 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { bbox, mask } from '@turf/turf'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import AppLayout from '@/layouts/AppLayout.vue'
+
+defineOptions({ layout: AppLayout })
 
 const props = defineProps({
     barrio: { type: Object, required: true },

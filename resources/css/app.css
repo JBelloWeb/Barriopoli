@@ -25,6 +25,13 @@
     --color-tinta: #1f2428;
 }
 
+/* Tailwind v4 usa currentColor como color de borde por defecto; se vuelve al gris de v3. */
+@layer base {
+    *, ::after, ::before, ::backdrop, ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
 html, body {
     font-family: 'Rosario', sans-serif;
     color: var(--color-tinta);

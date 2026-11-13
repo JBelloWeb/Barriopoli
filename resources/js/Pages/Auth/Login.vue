@@ -17,9 +17,13 @@ const enviar = () => form.post('/login', { onFinish: () => form.reset('password'
       </label>
       <button :disabled="form.processing" class="min-h-12 w-full rounded-lg bg-violeta-oscuro font-bold text-white disabled:opacity-60">Ingresar</button>
     </form>
-    <div class="mt-5 flex flex-col items-center">
-      <Link href="/forgot-password" class="min-h-11 py-2 underline">Olvidé mi contraseña</Link>
-      <Link href="/register" class="min-h-11 py-2 underline">Crear una cuenta</Link>
+    <Link href="/forgot-password" class="mt-3 block min-h-11 py-2 text-center underline">Olvidé mi contraseña</Link>
+
+    <div class="mt-6 border-t border-gray-200 pt-6 text-center">
+      <p class="mb-3 text-gray-600">¿Primera vez en Barriopoli?</p>
+      <Link href="/register" class="flex min-h-12 w-full items-center justify-center rounded-lg border-2 border-violeta-oscuro font-bold text-violeta-oscuro hover:bg-violeta-oscuro hover:text-white">
+        Crear cuenta
+      </Link>
     </div>
   </AuthLayout>
 </template>

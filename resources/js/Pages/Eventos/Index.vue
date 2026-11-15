@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { InfiniteScroll, router } from '@inertiajs/vue3'
+import { InfiniteScroll, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoriaChips from '@/components/CategoriaChips.vue'
@@ -21,9 +21,14 @@ const hojaAbierta = computed({
   set: (valor) => { if (!valor) activo.value = null },
 })
 
+const page = usePage()
+const alcance = ref(props.filtros.alcance ?? 'todos')
+const hayFavoritos = computed(() => (page.props.favoritosIds ?? []).length > 0)
+
 // reset: al cambiar el filtro, la lista se reemplaza en lugar de sumarse al scroll infinito.
-watch(seleccion, (categorias) => {
-  router.get('/eventos', { categorias }, { preserveState: true, preserveScroll: false, replace: true, reset: ['eventos'] })
+watch([seleccion, alcance], ([categorias, valor]) => {
+  const params = { categorias, ...(valor === 'mis_barrios' ? { alcance: valor } : {}) }
+  router.get('/eventos', params, { preserveState: true, preserveScroll: false, replace: true, reset: ['eventos'] })
 })
 </script>
 
@@ -31,6 +36,10 @@ watch(seleccion, (categorias) => {
   <div class="mx-auto max-w-2xl">
     <header class="sticky top-0 z-10 border-b border-gray-200 bg-white pt-[max(0.75rem,env(safe-area-inset-top))]">
       <h1 class="px-4 text-2xl font-bold">Eventos</h1>
+      <label v-if="hayFavoritos" class="flex min-h-11 items-center gap-2 px-4">
+        <input v-model="alcance" type="checkbox" true-value="mis_barrios" false-value="todos" class="size-5 accent-violeta-oscuro" />
+        Solo mis barrios
+      </label>
       <CategoriaChips v-model="seleccion" :categorias="categorias" />
     </header>
 
@@ -48,7 +57,9 @@ watch(seleccion, (categorias) => {
           </button>
         </li>
       </ul>
-      <p v-if="!eventos.data.length" class="p-6 text-center text-gray-600">No hay eventos con estos filtros.</p>
+      <p v-if="!eventos.data.length" class="p-6 text-center text-gray-600">
+        {{ alcance === 'mis_barrios' ? 'No hay eventos próximos en tus barrios.' : 'No hay eventos con estos filtros.' }}
+      </p>
     </InfiniteScroll>
 
     <BottomSheet v-model="hojaAbierta" :titulo="activo?.titulo ?? ''">

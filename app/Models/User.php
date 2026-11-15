@@ -8,6 +8,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -43,5 +45,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function solicitudes(): HasMany
     {
         return $this->hasMany(SolicitudEmprendedor::class);
+    }
+
+    public function barriosFavoritos(): BelongsToMany
+    {
+        return $this->belongsToMany(Barrio::class)->withTimestamps();
+    }
+
+    // barrio_propio_id queda fuera de Fillable: solo lo cambia MiBarrioController.
+    public function barrioPropio(): BelongsTo
+    {
+        return $this->belongsTo(Barrio::class, 'barrio_propio_id');
     }
 }

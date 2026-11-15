@@ -53,6 +53,10 @@ class HandleInertiaRequests extends Middleware
                 ],
             ],
             'status' => fn () => $request->session()->get('status'),
+            // Primer nivel y closures: una recarga parcial con only: ['favoritosIds', 'barrioPropioId']
+            // evalúa y envía solo estas dos, sin reenviar el GeoJSON del barrio.
+            'favoritosIds' => fn () => $user ? $user->barriosFavoritos()->pluck('barrios.id') : [],
+            'barrioPropioId' => fn () => $user?->barrio_propio_id,
         ];
     }
 }

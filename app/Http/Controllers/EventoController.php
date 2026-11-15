@@ -7,9 +7,11 @@ use App\Http\Requests\EventoRequest;
 use App\Http\Resources\EventoResource;
 use App\Models\Categoria;
 use App\Models\Evento;
+use App\Notifications\CambioEnEvento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -115,7 +117,9 @@ class EventoController extends Controller
         $this->aplicarImagen($request, $evento);
         $evento->save();
 
-        // PLAN-05: si $evento->wasChanged(Evento::CAMPOS_HORARIO), avisar a quienes lo agendaron.
+        if ($evento->wasChanged(Evento::CAMPOS_HORARIO)) {
+            Notification::send($evento->agendadoPor, new CambioEnEvento($evento, CambioEnEvento::HORARIO));
+        }
 
         Inertia::flash('exito', $evento->estado === EstadoEvento::Pendiente
             ? 'Guardado: el evento queda en revisión.'
@@ -128,7 +132,7 @@ class EventoController extends Controller
     {
         Gate::authorize('delete', $evento);
 
-        // PLAN-05: avisar a quienes lo agendaron antes de borrar.
+        Notification::send($evento->agendadoPor, new CambioEnEvento($evento, CambioEnEvento::CANCELADO));
         $evento->delete();
         Inertia::flash('exito', 'Evento eliminado.');
 

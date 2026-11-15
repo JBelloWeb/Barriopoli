@@ -6,6 +6,7 @@ use App\Enums\EstadoEvento;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -47,6 +48,11 @@ class Evento extends Model
     public function autor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function agendadoPor(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
     }
 
     public function scopePublicados(Builder $query): Builder

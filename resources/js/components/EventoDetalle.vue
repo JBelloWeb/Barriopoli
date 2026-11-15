@@ -2,6 +2,7 @@
 // Vue escapa todo el contenido: reemplaza al popup con setHTML (XSS).
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import AgendaBoton from '@/components/AgendaBoton.vue'
 import { formatearEvento } from '@/lib/fechas'
 
 const props = defineProps({ evento: { type: Object, required: true } })
@@ -17,8 +18,9 @@ const fecha = computed(() => formatearEvento(props.evento.inicio, props.evento.f
     <p class="text-gray-600">{{ evento.direccion }} · {{ evento.barrio.nombre }}</p>
     <p v-if="evento.organizador" class="mt-1 text-sm text-gray-600">Organiza {{ evento.organizador }}</p>
     <p v-if="evento.descripcion" class="mt-3 whitespace-pre-line">{{ evento.descripcion }}</p>
-    <!-- PLAN-05: <AgendaBoton :evento="evento" /> -->
-    <div class="mt-3 flex gap-4">
+    <AgendaBoton v-if="evento.estado === 'publicado' && !evento.cancelado" :evento="evento" />
+    <!-- Un cancelado ya no tiene página ni se edita (soft delete → 404). -->
+    <div v-if="!evento.cancelado" class="mt-3 flex gap-4">
       <Link :href="`/eventos/${evento.id}`" class="min-h-11 py-2 underline">Ver página</Link>
       <Link v-if="evento.editable" :href="`/eventos/${evento.id}/editar`" class="min-h-11 py-2 underline">Editar</Link>
     </div>

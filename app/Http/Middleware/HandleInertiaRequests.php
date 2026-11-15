@@ -57,6 +57,9 @@ class HandleInertiaRequests extends Middleware
             // evalúa y envía solo estas dos, sin reenviar el GeoJSON del barrio.
             'favoritosIds' => fn () => $user ? $user->barriosFavoritos()->pluck('barrios.id') : [],
             'barrioPropioId' => fn () => $user?->barrio_propio_id,
+            // Se evalúan después del controlador: al entrar a la agenda los avisos ya están leídos.
+            'agendaIds' => fn () => $user ? $user->eventosAgendados()->pluck('eventos.id') : [],
+            'avisosSinLeer' => fn () => $user ? $user->unreadNotifications()->count() : 0,
         ];
     }
 }

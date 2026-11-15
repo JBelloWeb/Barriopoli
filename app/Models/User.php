@@ -52,6 +52,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Barrio::class)->withTimestamps();
     }
 
+    public function eventosAgendados(): BelongsToMany
+    {
+        return $this->belongsToMany(Evento::class)->withTimestamps();
+    }
+
     // barrio_propio_id queda fuera de Fillable: solo lo cambia MiBarrioController.
     public function barrioPropio(): BelongsTo
     {

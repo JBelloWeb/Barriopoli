@@ -10,7 +10,7 @@ it('devuelve 404 para un barrio inexistente', function () {
     $this->get('/barrios/no-existe')->assertNotFound();
 });
 
-// PLAN-05 reemplaza /agenda; /eventos ya es real (EventoTest).
-it('muestra la sección provisoria de agenda', function () {
-    $this->get('/agenda')->assertOk()->assertInertia(fn ($page) => $page->component('Proximamente'));
+// /eventos y /agenda ya son reales (EventoTest, AgendaTest).
+it('la agenda pide ingresar', function () {
+    $this->get('/agenda')->assertRedirect('/login');
 });

@@ -1,7 +1,10 @@
 <?php
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\EventoController;
+use App\Http\Controllers\FavoritoController;
+use App\Http\Controllers\MiBarrioController;
 use App\Http\Controllers\GeocodificacionController;
 use App\Http\Controllers\Moderacion\CategoriaController;
 use App\Http\Controllers\Moderacion\EventoController as ModeracionEventoController;
@@ -10,7 +13,12 @@ use App\Http\Controllers\Moderacion\SolicitudController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SolicitudEmprendedorController;
 
-Route::get('/', fn () => redirect('/barrios'));
+// Con "Mi barrio" marcado, la app abre directo en él.
+Route::get('/', function (Request $request) {
+    $slug = $request->user()?->barrioPropio()->value('slug');
+
+    return $slug ? to_route('barrios.show', $slug) : to_route('barrios.index');
+})->name('inicio');
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
 // Provisoria: la reemplaza PLAN-05 (agenda).
@@ -21,6 +29,12 @@ Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber(
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil');
+
+    // Favoritos y Mi barrio: requieren cuenta, no email verificado (no publican nada).
+    Route::put('/favoritos/{barrio:slug}', [FavoritoController::class, 'update'])->name('favoritos.update');
+    Route::delete('/favoritos/{barrio:slug}', [FavoritoController::class, 'destroy'])->name('favoritos.destroy');
+    Route::put('/mi-barrio/{barrio:slug}', [MiBarrioController::class, 'update'])->name('mi-barrio.update');
+    Route::delete('/mi-barrio', [MiBarrioController::class, 'destroy'])->name('mi-barrio.destroy');
 
     Route::middleware('verified')->group(function () {
         Route::get('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'create'])->name('solicitud.create');

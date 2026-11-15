@@ -30,6 +30,10 @@ class EventoController extends Controller
             ->vigentes()
             ->with(self::RELACIONES)
             ->when($filtros['categorias'] ?? null, fn ($query, $ids) => $query->whereIn('categoria_id', $ids))
+            ->when(
+                ($filtros['alcance'] ?? null) === 'mis_barrios' && $request->user(),
+                fn ($query) => $query->whereIn('barrio_id', $request->user()->barriosFavoritos()->select('barrios.id')),
+            )
             ->orderBy('inicio')
             ->paginate(15)
             ->withQueryString()
@@ -38,7 +42,10 @@ class EventoController extends Controller
         return Inertia::render('Eventos/Index', [
             'eventos' => Inertia::scroll($eventos),
             'categorias' => Categoria::activas()->get(['id', 'nombre', 'color', 'icono']),
-            'filtros' => ['categorias' => array_map('intval', $filtros['categorias'] ?? [])],
+            'filtros' => [
+                'categorias' => array_map('intval', $filtros['categorias'] ?? []),
+                'alcance' => $filtros['alcance'] ?? 'todos',
+            ],
         ]);
     }
 

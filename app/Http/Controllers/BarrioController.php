@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\EventoResource;
 use App\Models\Barrio;
 use App\Models\Categoria;
 use Inertia\Inertia;
@@ -20,30 +21,18 @@ class BarrioController extends Controller
     {
         $barrio = Barrio::where('slug', $slug)->firstOrFail();
 
-        $eventosGeoJson = [
-            'type' => 'FeatureCollection',
-            'features' => $barrio->eventos()->with('categoria')->get()->map(fn ($evento) => [
-                'type' => 'Feature',
-                'geometry' => [
-                    'type' => 'Point',
-                    'coordinates' => [(float) $evento->longitud, (float) $evento->latitud],
-                ],
-                'properties' => [
-                    'id' => $evento->id,
-                    'titulo' => $evento->titulo,
-                    'direccion' => $evento->direccion,
-                    'fecha' => $evento->fecha,
-                    'categoria_id' => $evento->categoria_id,
-                    'categoria' => $evento->categoria->nombre,
-                    'icono' => $evento->categoria->icono,
-                    'color' => $evento->categoria->color,
-                ],
-            ])->values(),
-        ];
+        // Solo publicados y vigentes: un pendiente o con coordenadas nulas nunca llega al mapa.
+        $eventos = $barrio->eventos()
+            ->publicados()
+            ->vigentes()
+            ->with(EventoController::RELACIONES)
+            ->orderBy('inicio')
+            ->get();
 
         return Inertia::render('Barrios/Show', [
             'barrio' => $barrio,
-            'eventosGeoJson' => $eventosGeoJson,
+            // El MapaLayout arma el GeoJSON de los pines y abre el detalle en el bottom sheet.
+            'eventos' => EventoResource::collection($eventos)->resolve(),
             // El buscador del layout también la usa en esta página.
             'barrios' => $this->listaBarrios(),
             'categorias' => Inertia::once(fn () => Categoria::activas()->get(['id', 'nombre', 'color', 'icono'])),

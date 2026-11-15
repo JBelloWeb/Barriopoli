@@ -2,7 +2,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\EventoController;
+use App\Http\Controllers\GeocodificacionController;
 use App\Http\Controllers\Moderacion\CategoriaController;
+use App\Http\Controllers\Moderacion\EventoController as ModeracionEventoController;
 use App\Http\Controllers\Moderacion\PanelController;
 use App\Http\Controllers\Moderacion\SolicitudController;
 use App\Http\Controllers\PerfilController;
@@ -11,12 +13,11 @@ use App\Http\Controllers\SolicitudEmprendedorController;
 Route::get('/', fn () => redirect('/barrios'));
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
-// Provisorias: las reemplazan PLAN-03 (eventos.index) y PLAN-05 (agenda).
-Route::inertia('/eventos', 'Proximamente', ['seccion' => 'Eventos'])->name('eventos.index');
+// Provisoria: la reemplaza PLAN-05 (agenda).
 Route::inertia('/agenda', 'Proximamente', ['seccion' => 'Agenda'])->name('agenda');
-Route::post('/eventos', [EventoController::class, 'store'])->name('eventos.store');
-Route::get('/eventos/{evento}/edit', [EventoController::class, 'edit'])->name('eventos.edit');
-Route::put('/eventos/{evento}', [EventoController::class, 'update'])->name('eventos.update');
+
+Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
+Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil');
@@ -24,6 +25,18 @@ Route::middleware('auth')->group(function () {
     Route::middleware('verified')->group(function () {
         Route::get('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'create'])->name('solicitud.create');
         Route::post('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'store'])->name('solicitud.store');
+
+        // La autorización fina (autor o moderador) la hacen EventoPolicy y EventoRequest.
+        Route::get('/mis-eventos', [EventoController::class, 'misEventos'])->name('mis-eventos');
+        Route::get('/eventos/crear', [EventoController::class, 'create'])->name('eventos.create');
+        Route::post('/eventos', [EventoController::class, 'store'])->name('eventos.store');
+        Route::get('/eventos/{evento}/editar', [EventoController::class, 'edit'])->name('eventos.edit');
+        Route::get('/eventos/{evento}/duplicar', [EventoController::class, 'duplicar'])->name('eventos.duplicar');
+        Route::put('/eventos/{evento}', [EventoController::class, 'update'])->name('eventos.update');
+        Route::delete('/eventos/{evento}', [EventoController::class, 'destroy'])->name('eventos.destroy');
+
+        Route::get('/geocodificar', [GeocodificacionController::class, 'buscar'])->middleware('throttle:geocodificar')->name('geocodificar');
+        Route::get('/geocodificar/barrio', [GeocodificacionController::class, 'detectar'])->middleware('throttle:60,1')->name('geocodificar.barrio');
     });
 });
 
@@ -35,4 +48,7 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
     Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
     Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+
+    Route::post('/eventos/{evento}/aprobar', [ModeracionEventoController::class, 'aprobar'])->name('eventos.aprobar');
+    Route::post('/eventos/{evento}/rechazar', [ModeracionEventoController::class, 'rechazar'])->name('eventos.rechazar');
 });

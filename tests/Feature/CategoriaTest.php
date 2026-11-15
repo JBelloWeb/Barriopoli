@@ -65,7 +65,7 @@ it('no borra una categoría con eventos', function () {
     $categoria = categoria();
     Evento::create([
         'barrio_id' => barrioDePrueba()->id, 'categoria_id' => $categoria->id,
-        'titulo' => 'Recital', 'direccion' => 'Calle 1', 'fecha' => now()->addDay(),
+        'titulo' => 'Recital', 'direccion' => 'Calle 1', 'inicio' => now()->addDay(),
     ]);
 
     $this->actingAs(moderadorCategorias())
@@ -86,16 +86,17 @@ it('borra una categoría sin eventos', function () {
 it('envía al mapa la categoría y el color de cada evento', function () {
     $categoria = categoria();
     $barrio = barrioDePrueba();
-    Evento::create([
+    Evento::forceCreate([
         'barrio_id' => $barrio->id, 'categoria_id' => $categoria->id, 'titulo' => 'Recital',
-        'direccion' => 'Calle 1', 'latitud' => -34.575, 'longitud' => -58.425, 'fecha' => now()->addDay(),
+        'direccion' => 'Calle 1', 'latitud' => -34.575, 'longitud' => -58.425, 'inicio' => now()->addDay(),
+        'estado' => 'publicado',
     ]);
     categoria(['nombre' => 'Vieja', 'slug' => 'vieja', 'activa' => false]);
 
     $this->get('/barrios/palermo')->assertInertia(fn ($page) => $page
         ->component('Barrios/Show')
-        ->where('eventosGeoJson.features.0.properties.categoria_id', $categoria->id)
-        ->where('eventosGeoJson.features.0.properties.color', '#c2410c')
+        ->where('eventos.0.categoria.id', $categoria->id)
+        ->where('eventos.0.categoria.color', '#c2410c')
         ->has('categorias', 1)
         ->where('categorias.0.nombre', 'Música'));
 });

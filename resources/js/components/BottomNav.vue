@@ -30,6 +30,11 @@ const activa = (seccion) => page.url.startsWith(seccion.activaEn)
       <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path :d="seccion.icono" />
       </svg>
+      <span
+        v-if="seccion.nombre === 'Agenda' && page.props.avisosSinLeer > 0"
+        class="absolute right-[calc(50%-1.25rem)] top-1 flex size-5 items-center justify-center rounded-full bg-red-700 text-xs text-white md:right-3"
+        :aria-label="`${page.props.avisosSinLeer} avisos sin leer`"
+      >{{ page.props.avisosSinLeer }}</span>
       {{ seccion.nombre }}
     </Link>
   </nav>

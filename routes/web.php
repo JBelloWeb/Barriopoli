@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
@@ -21,11 +22,10 @@ Route::get('/', function (Request $request) {
 })->name('inicio');
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
-// Provisoria: la reemplaza PLAN-05 (agenda).
-Route::inertia('/agenda', 'Proximamente', ['seccion' => 'Agenda'])->name('agenda');
-
 Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
 Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
+// Pública: la policy 'view' deja descargar solo publicados (o propios).
+Route::get('/eventos/{evento}/calendario.ics', [AgendaController::class, 'exportarEvento'])->whereNumber('evento')->name('eventos.ics');
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil');
@@ -35,6 +35,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/favoritos/{barrio:slug}', [FavoritoController::class, 'destroy'])->name('favoritos.destroy');
     Route::put('/mi-barrio/{barrio:slug}', [MiBarrioController::class, 'update'])->name('mi-barrio.update');
     Route::delete('/mi-barrio', [MiBarrioController::class, 'destroy'])->name('mi-barrio.destroy');
+
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda');
+    Route::get('/agenda/calendario.ics', [AgendaController::class, 'exportarAgenda'])->name('agenda.ics');
+    Route::put('/agenda/{evento}', [AgendaController::class, 'update'])->whereNumber('evento')->name('agenda.update');
+    Route::delete('/agenda/{evento}', [AgendaController::class, 'destroy'])->whereNumber('evento')->name('agenda.destroy');
 
     Route::middleware('verified')->group(function () {
         Route::get('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'create'])->name('solicitud.create');

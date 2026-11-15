@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const abierto = defineModel({ type: Boolean, default: false })
 defineProps({ titulo: { type: String, default: '' } })
@@ -29,10 +29,15 @@ watch(abierto, (valor) => {
   else window.removeEventListener('keydown', alPresionarTecla)
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', alPresionarTecla))
+
+// Con SSR, un Teleport a body no coincide con el HTML del servidor (hydration mismatch):
+// se monta recién en el cliente.
+const montado = ref(false)
+onMounted(() => { montado.value = true })
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport v-if="montado" to="body">
     <Transition name="sheet">
       <section
         v-if="abierto"

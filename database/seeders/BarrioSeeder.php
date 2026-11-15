@@ -22,6 +22,8 @@ class BarrioSeeder extends Seeder
                 'slug' => Str::slug($feature['properties']['BARRIO']),
                 'comuna' => (int) $feature['properties']['COMUNA'],
                 'geojson' => $feature,
+                // WithoutModelEvents silencia el hook saving del modelo: geom se arma acá.
+                'geom' => Barrio::geomDesde($feature),
             ]);
         }
     }

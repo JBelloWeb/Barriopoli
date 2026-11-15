@@ -3,11 +3,13 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import CategoriasPanel from '@/components/moderacion/CategoriasPanel.vue'
+import EventosPanel from '@/components/moderacion/EventosPanel.vue'
 
 defineOptions({ layout: AppLayout })
 defineProps({
   solicitudes: { type: Array, default: () => [] },
   categorias: { type: Array, default: () => [] },
+  eventosPendientes: { type: Array, default: () => [] },
 })
 
 const pestana = ref('solicitudes')
@@ -30,7 +32,9 @@ const rechazar = (id) => {
       <button role="tab" :aria-selected="pestana === 'categorias'" class="min-h-11 rounded-full px-4" :class="pestana === 'categorias' ? 'bg-violeta-oscuro text-white' : 'bg-gray-100'" @click="pestana = 'categorias'">
         Categorías ({{ categorias.length }})
       </button>
-      <!-- PLAN-03: pestaña Eventos. -->
+      <button role="tab" :aria-selected="pestana === 'eventos'" class="min-h-11 shrink-0 rounded-full px-4" :class="pestana === 'eventos' ? 'bg-violeta-oscuro text-white' : 'bg-gray-100'" @click="pestana = 'eventos'">
+        Eventos ({{ eventosPendientes.length }})
+      </button>
     </div>
 
     <ul v-if="pestana === 'solicitudes'" class="mt-4 space-y-3">
@@ -48,5 +52,6 @@ const rechazar = (id) => {
     </ul>
 
     <CategoriasPanel v-if="pestana === 'categorias'" :categorias="categorias" />
+    <EventosPanel v-if="pestana === 'eventos'" :eventos="eventosPendientes" />
   </div>
 </template>

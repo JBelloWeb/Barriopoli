@@ -3,15 +3,13 @@
 // navegación entre /barrios y /barrios/{slug}. Solo cambian las capas.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
-import * as maplibregl from 'maplibre-gl'
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import 'maplibre-gl/dist/maplibre-gl.css'
 import { bbox, mask } from '@turf/turf'
+import { maplibregl, ESTILO_MAPA } from '@/lib/mapa'
 import BarrioSelector from '@/components/BarrioSelector.vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import CategoriaChips from '@/components/CategoriaChips.vue'
+import EventoDetalle from '@/components/EventoDetalle.vue'
 import { crearCapaEventos3D } from '@/mapa/capaEventos3D.js'
-
-maplibregl.setWorkerUrl(workerUrl)
 
 // Límites de CABA [oeste, sur, este, norte] para la vista general.
 const CABA_BBOX = [-58.5315, -34.7053, -58.3352, -34.5265]
@@ -21,19 +19,32 @@ const MARGEN_BOUNDS = 0.015
 const page = usePage()
 const barrios = computed(() => page.props.barrios ?? [])
 const barrio = computed(() => page.props.barrio ?? null)
-const eventos = computed(() => page.props.eventosGeoJson ?? null)
+// Eventos publicados del barrio (EventoResource). El GeoJSON de los pines se arma acá.
+const eventos = computed(() => page.props.eventos ?? [])
+const aFeatures = (lista) => lista.map((evento) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [evento.longitud, evento.latitud] },
+    properties: { id: evento.id, categoria_id: evento.categoria.id, color: evento.categoria.color },
+}))
+
+// Detalle en bottom sheet: se lee sin perder el mapa.
+const eventoActivoId = ref(null)
+const eventoActivo = computed(() => eventos.value.find((e) => e.id === eventoActivoId.value) ?? null)
+const hojaAbierta = computed({
+    get: () => eventoActivo.value !== null,
+    set: (valor) => { if (!valor) eventoActivoId.value = null },
+})
 
 // Filtro por categoría. Vive en el layout persistente, así que se conserva al cambiar de barrio.
 const seleccion = ref([])
 const categoriasDelBarrio = computed(() => {
-    const presentes = new Set((parsear(eventos.value)?.features ?? []).map((f) => f.properties.categoria_id))
+    const presentes = new Set(eventos.value.map((e) => e.categoria.id))
     // También las seleccionadas: si no, un filtro activo sin eventos en este barrio no se podría quitar.
     return (page.props.categorias ?? []).filter((c) => presentes.has(c.id) || seleccion.value.includes(c.id))
 })
 
 const contenedor = ref(null)
 let map = null
-let popup = null
 let capaEventos = null
 
 const parsear = (dato) => (typeof dato === 'string' ? JSON.parse(dato) : dato)
@@ -45,7 +56,7 @@ const limpiarCapas = () => {
     for (const fuente of ['eventos', 'barrio', 'mascara']) {
         if (map.getSource(fuente)) map.removeSource(fuente)
     }
-    popup?.remove()
+    eventoActivoId.value = null
 }
 
 const mostrarCiudad = () => {
@@ -69,7 +80,7 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     })
     map.addLayer({ id: 'barrio-borde', type: 'line', source: 'barrio', paint: { 'line-color': '#ffdeb6', 'line-width': 3 } })
 
-    const features = parsear(datosEventos)?.features ?? []
+    const features = aFeatures(datosEventos)
     capaEventos = null
     if (features.length) {
         capaEventos = crearCapaEventos3D(features, '/models/pin.glb')
@@ -103,7 +114,7 @@ const aplicarFiltro = (ids) => {
     if (map?.getLayer('eventos-puntos')) {
         map.setFilter('eventos-puntos', ids.length ? ['in', ['get', 'categoria_id'], ['literal', ids]] : null)
     }
-    popup?.remove()
+    eventoActivoId.value = null
 }
 
 const sincronizar = () => {
@@ -113,39 +124,11 @@ const sincronizar = () => {
     else mostrarCiudad()
 }
 
-// El contenido del popup se arma con textContent: título y dirección los cargan
-// usuarios, e insertarlos con setHTML permitiría inyectar scripts (XSS).
-const crearContenidoPopup = ({ id, titulo, direccion, fecha, categoria, icono }) => {
-    const raiz = document.createElement('div')
-    raiz.className = 'font-rosario p-1'
-    const linea = (etiqueta, texto, clase) => {
-        const el = document.createElement(etiqueta)
-        el.className = clase
-        el.textContent = texto ?? ''
-        raiz.append(el)
-        return el
-    }
-    if (categoria) linea('span', `${icono ?? ''} ${categoria}`.trim(), 'block text-xs font-bold text-violeta-oscuro')
-    linea('strong', titulo ?? 'Evento', 'block text-sm text-tinta')
-    linea('span', direccion, 'block text-xs text-gray-600')
-    linea('small', fecha, 'block text-xs text-gray-400')
-    if (id) {
-        const enlace = linea('a', 'Editar evento', 'mt-1.5 inline-block text-xs font-bold text-violeta-oscuro underline')
-        enlace.href = `/eventos/${Number(id)}/edit`
-    }
-    return raiz
-}
-
+// Un solo handler registrado en onMounted: si viviera en mostrarBarrio se acumularía en cada cambio de barrio.
 const alHacerClick = (e) => {
     if (!map.getLayer('eventos-puntos')) return
     const [feature] = map.queryRenderedFeatures(e.point, { layers: ['eventos-puntos'] })
-    if (!feature) return
-
-    popup?.remove()
-    popup = new maplibregl.Popup()
-        .setLngLat(feature.geometry.coordinates.slice())
-        .setDOMContent(crearContenidoPopup(feature.properties))
-        .addTo(map)
+    if (feature) eventoActivoId.value = feature.properties.id
 }
 
 const alMoverMouse = (e) => {
@@ -159,7 +142,7 @@ const irABarrio = (b) => router.visit(`/barrios/${b.slug}`)
 onMounted(() => {
     map = new maplibregl.Map({
         container: contenedor.value,
-        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        style: ESTILO_MAPA,
         ...VISTA_CIUDAD,
         minZoom: 9,
         maxZoom: 18,
@@ -203,5 +186,9 @@ onBeforeUnmount(() => {
                 <slot />
             </div>
         </div>
+
+        <BottomSheet v-model="hojaAbierta" :titulo="eventoActivo?.titulo ?? ''">
+            <EventoDetalle v-if="eventoActivo" :evento="eventoActivo" />
+        </BottomSheet>
     </div>
 </template>

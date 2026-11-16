@@ -1,28 +1,52 @@
 <script setup>
 // Vue escapa todo el contenido: reemplaza al popup con setHTML (XSS).
 import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
 import AgendaBoton from '@/components/AgendaBoton.vue'
-import { formatearEvento } from '@/lib/fechas'
+import Boton from '@/components/ui/Boton.vue'
+import Icono from '@/components/ui/Icono.vue'
+import Insignia from '@/components/ui/Insignia.vue'
+import { pastillasEvento } from '@/lib/fechas'
+import { nombreLegible } from '@/lib/texto'
 
 const props = defineProps({ evento: { type: Object, required: true } })
-const fecha = computed(() => formatearEvento(props.evento.inicio, props.evento.fin))
+const pastillas = computed(() => pastillasEvento(props.evento.inicio, props.evento.fin))
+const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
 </script>
 
 <template>
   <article>
-    <img v-if="evento.imagen_url" :src="evento.imagen_url" :alt="evento.titulo" loading="lazy" class="mb-3 aspect-video w-full rounded-xl object-cover" />
-    <p v-if="evento.cancelado" class="mb-2 rounded-lg bg-red-100 px-3 py-1 font-bold text-red-800">Cancelado</p>
-    <p class="font-bold" :style="{ color: evento.categoria.color }">{{ evento.categoria.icono }} {{ evento.categoria.nombre }}</p>
-    <p class="mt-1 font-bold">{{ fecha }}</p>
-    <p class="text-gray-600">{{ evento.direccion }} · {{ evento.barrio.nombre }}</p>
-    <p v-if="evento.organizador" class="mt-1 text-sm text-gray-600">Organiza {{ evento.organizador }}</p>
-    <p v-if="evento.descripcion" class="mt-3 whitespace-pre-line">{{ evento.descripcion }}</p>
+    <img v-if="evento.imagen_url" :src="evento.imagen_url" :alt="evento.titulo" loading="lazy" class="mb-4 aspect-video w-full rounded-3xl object-cover" />
+
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Punto de color + texto en tinta: el color elegido por moderación no garantiza contraste como texto. -->
+      <span class="flex items-center gap-2 font-bold">
+        <span class="size-3 rounded-full" :style="{ backgroundColor: evento.categoria.color }" aria-hidden="true"></span>
+        <span aria-hidden="true">{{ evento.categoria.icono }}</span>{{ evento.categoria.nombre }}
+      </span>
+      <Insignia v-if="evento.cancelado" tono="cancelado">Cancelado</Insignia>
+    </div>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      <span v-for="p in pastillas" :key="p" class="pastilla">{{ p }}</span>
+    </div>
+
+    <p class="mt-4 flex items-start gap-2 font-semibold">
+      <Icono nombre="pin" class="mt-0.5 size-5 text-violeta-500" />
+      <span>{{ evento.direccion }} · <span class="text-violeta-700">{{ barrio }}</span></span>
+    </p>
+    <p v-if="evento.organizador" class="mt-2 flex items-center gap-2 text-sm text-niebla-600">
+      <Icono nombre="tienda" class="size-5 text-violeta-500" />
+      <span>Organiza <span class="font-bold text-tinta">{{ evento.organizador }}</span></span>
+    </p>
+
+    <p v-if="evento.descripcion" class="mt-4 whitespace-pre-line leading-relaxed">{{ evento.descripcion }}</p>
+
     <AgendaBoton v-if="evento.estado === 'publicado' && !evento.cancelado" :evento="evento" />
+
     <!-- Un cancelado ya no tiene página ni se edita (soft delete → 404). -->
-    <div v-if="!evento.cancelado" class="mt-3 flex gap-4">
-      <Link :href="`/eventos/${evento.id}`" class="min-h-11 py-2 underline">Ver página</Link>
-      <Link v-if="evento.editable" :href="`/eventos/${evento.id}/editar`" class="min-h-11 py-2 underline">Editar</Link>
+    <div v-if="!evento.cancelado" class="mt-2 flex flex-wrap justify-center gap-x-2">
+      <Boton :href="`/eventos/${evento.id}`" variante="fantasma" chico>Ver página</Boton>
+      <Boton v-if="evento.editable" :href="`/eventos/${evento.id}/editar`" variante="fantasma" icono="editar" chico>Editar</Boton>
     </div>
   </article>
 </template>

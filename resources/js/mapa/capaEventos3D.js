@@ -23,6 +23,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
     // por malla multiplicaría la memoria sin ninguna diferencia visual.
     const materiales = new Map()
     let categoriasVisibles = null // null = todas
+    let eliminada = false
 
     const materialPara = (color, base) => {
         if (!materiales.has(color)) {
@@ -93,7 +94,8 @@ export const crearCapaEventos3D = (features, modelUrl) => {
                     mapInstance.triggerRepaint()
                 },
                 undefined,
-                (err) => console.error('Error cargando el modelo 3D:', err)
+                // Si se salió del mapa mientras bajaba el modelo, el fetch abortado no es un error.
+                (err) => { if (!eliminada) console.error('Error cargando el modelo 3D:', err) }
             )
         },
 
@@ -127,6 +129,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
         },
 
         onRemove() {
+            eliminada = true
             items.length = 0
             materiales.forEach((m) => m.dispose())
             materiales.clear()

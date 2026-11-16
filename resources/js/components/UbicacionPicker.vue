@@ -2,6 +2,10 @@
 // Dirección → Nominatim (vía servidor) → pin arrastrable. El barrio lo confirma el servidor con ST_Contains.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { maplibregl, ESTILO_MAPA, CENTRO_CABA } from '@/lib/mapa'
+import Boton from '@/components/ui/Boton.vue'
+import Icono from '@/components/ui/Icono.vue'
+import { claseControl, claseError, claseEtiqueta } from '@/lib/campos'
+import { nombreLegible } from '@/lib/texto'
 
 const direccion = defineModel('direccion', { type: String, default: '' })
 const latitud = defineModel('latitud', { default: null })
@@ -105,7 +109,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <label for="direccion" class="mb-1 block font-bold">Dirección</label>
+    <label for="direccion" :class="claseEtiqueta">Dirección</label>
     <div class="flex gap-2">
       <input
         id="direccion"
@@ -115,22 +119,26 @@ onBeforeUnmount(() => {
         autocomplete="street-address"
         enterkeyhint="search"
         placeholder="Ej.: Av. Corrientes 1500"
-        class="min-h-12 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 text-base focus:outline-2 focus:outline-violeta"
+        :aria-invalid="Boolean(errorDireccion)"
+        :class="[claseControl, 'min-h-12 min-w-0 flex-1']"
         @keydown.enter.prevent="buscar"
       />
-      <button type="button" :disabled="buscando" class="min-h-12 rounded-lg bg-crema px-4 font-bold disabled:opacity-60" @click="buscar">
-        {{ buscando ? 'Buscando…' : 'Buscar' }}
-      </button>
+      <Boton variante="suave" icono="buscar" :cargando="buscando" class="shrink-0 px-4!" @click="buscar">
+        <span class="sr-only sm:not-sr-only">{{ buscando ? 'Buscando…' : 'Buscar' }}</span>
+      </Boton>
     </div>
-    <p v-if="errorDireccion" class="mt-1 text-sm text-red-700">{{ errorDireccion }}</p>
+    <p v-if="errorDireccion" :class="claseError"><Icono nombre="alerta" class="mt-px size-4" />{{ errorDireccion }}</p>
 
     <!-- Envoltorio relative: maplibre-gl.css pisa las utilidades de Tailwind v4 en .maplibregl-map -->
-    <div class="relative mt-3 h-64 w-full overflow-hidden rounded-xl border">
+    <div class="relative mt-3 h-64 w-full overflow-hidden rounded-3xl ring-2 ring-niebla-200">
       <div ref="contenedor" class="h-full w-full"></div>
     </div>
+    <p class="mt-1.5 text-sm text-niebla-600">Podés mover el pin o tocar el mapa para ajustar el punto.</p>
 
-    <p v-if="barrio" class="mt-2 font-bold">Barrio: {{ barrio }}</p>
-    <p v-if="mensaje" class="mt-1 text-sm" role="status">{{ mensaje }}</p>
-    <p v-if="error" class="mt-1 text-sm text-red-700">{{ error }}</p>
+    <p v-if="barrio" class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-violeta-50 px-3 py-1.5 font-bold text-violeta-700">
+      <Icono nombre="pin" class="size-5" /> {{ nombreLegible(barrio) }}
+    </p>
+    <p v-if="mensaje" class="mt-2 text-sm" role="status">{{ mensaje }}</p>
+    <p v-if="error" :class="claseError"><Icono nombre="alerta" class="mt-px size-4" />{{ error }}</p>
   </div>
 </template>

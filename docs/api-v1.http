@@ -1,0 +1,168 @@
+# Barriopoli — API REST v1
+# Cliente: REST Client (VS Code) o HTTP Client de PhpStorm.
+# Lectura pública. Escritura: Bearer token (POST /tokens o Perfil → "Acceso a la API").
+# Errores siempre en JSON: 401 sin token, 403 sin permiso/ability, 404, 422 { message, errors }, 429.
+# Ojo en Windows: con curl mandá el cuerpo desde un archivo UTF-8 (--data-binary @archivo.json);
+# los acentos pasados inline en la consola pueden llegar mal codificados.
+
+@base = http://barriopoli.test/api/v1
+@token = {{login.response.body.token}}
+
+### Login → token (vence a los 90 días; mismo "dispositivo" reemplaza el anterior)
+# @name login
+POST {{base}}/tokens
+Accept: application/json
+Content-Type: application/json
+
+{"email": "emprendedor@barriopoli.test", "password": "password", "dispositivo": "rest-client"}
+
+### Quién soy y qué puede hacer este token
+GET {{base}}/yo
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Barrios (sin geometría)
+GET {{base}}/barrios
+Accept: application/json
+
+### Barrio con su polígono GeoJSON
+GET {{base}}/barrios/palermo
+Accept: application/json
+
+### Categorías activas
+GET {{base}}/categorias
+Accept: application/json
+
+### Eventos publicados y vigentes (filtros opcionales)
+GET {{base}}/eventos?barrio=palermo&categorias[]=1&desde=2026-12-01&hasta=2026-12-31&per_page=10
+Accept: application/json
+
+### Detalle de un evento
+GET {{base}}/eventos/1
+Accept: application/json
+
+### Emprendimientos
+GET {{base}}/emprendimientos
+Accept: application/json
+
+### Emprendimiento con sus próximos eventos
+GET {{base}}/emprendimientos/3
+Accept: application/json
+
+### Mis eventos (todos los estados)
+GET {{base}}/mis-eventos
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Crear evento → 201, queda "pendiente" hasta que lo apruebe un moderador.
+# El barrio lo detecta el servidor desde latitud/longitud.
+# @name alta
+POST {{base}}/eventos
+Accept: application/json
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "titulo": "Feria de diseño",
+  "descripcion": "Diseño independiente del barrio.",
+  "categoria_id": 1,
+  "direccion": "Plaza Italia",
+  "latitud": -34.5807,
+  "longitud": -58.4209,
+  "inicio": "2026-12-05T18:00:00-03:00",
+  "fin": "2026-12-05T22:00:00-03:00"
+}
+
+### Editar (PUT completo). Cambiar solo inicio/fin mantiene "publicado" y avisa a quien lo agendó;
+# cambiar título, descripción, categoría, ubicación o imagen lo devuelve a revisión.
+PUT {{base}}/eventos/{{alta.response.body.data.id}}
+Accept: application/json
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "titulo": "Feria de diseño",
+  "descripcion": "Diseño independiente del barrio.",
+  "categoria_id": 1,
+  "direccion": "Plaza Italia",
+  "latitud": -34.5807,
+  "longitud": -58.4209,
+  "inicio": "2026-12-05T19:00:00-03:00",
+  "fin": "2026-12-05T23:00:00-03:00"
+}
+
+### Editar con imagen: POST multipart + _method=PUT (PHP no parsea multipart en PUT)
+POST {{base}}/eventos/{{alta.response.body.data.id}}
+Accept: application/json
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="_method"
+
+PUT
+--limite
+Content-Disposition: form-data; name="titulo"
+
+Feria de diseño
+--limite
+Content-Disposition: form-data; name="categoria_id"
+
+1
+--limite
+Content-Disposition: form-data; name="direccion"
+
+Plaza Italia
+--limite
+Content-Disposition: form-data; name="latitud"
+
+-34.5807
+--limite
+Content-Disposition: form-data; name="longitud"
+
+-58.4209
+--limite
+Content-Disposition: form-data; name="inicio"
+
+2026-12-05T19:00:00-03:00
+--limite
+Content-Disposition: form-data; name="imagen"; filename="flyer.jpg"
+Content-Type: image/jpeg
+
+< ./flyer.jpg
+--limite--
+
+### Cancelar (baja lógica) → 204. Quien lo agendó lo ve como "cancelado".
+DELETE {{base}}/eventos/{{alta.response.body.data.id}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Agenda (vista=proximos|pasados)
+GET {{base}}/agenda?vista=proximos
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Agendar un evento publicado → 204
+PUT {{base}}/agenda/1
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Quitar de la agenda → 204
+DELETE {{base}}/agenda/1
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Avisos sin leer (cambio de horario / cancelación). Leerlos no los marca.
+GET {{base}}/avisos
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Marcar avisos como leídos → 204
+POST {{base}}/avisos/leidos
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Cerrar sesión: revoca el token actual → 204
+DELETE {{base}}/tokens/actual
+Accept: application/json
+Authorization: Bearer {{token}}

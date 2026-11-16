@@ -10,8 +10,23 @@ class PerfilController extends Controller
 {
     public function show(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('Perfil/Show', [
-            'solicitud' => $request->user()->solicitudes()->latest()->first(['estado', 'motivo_rechazo']),
+            'solicitud' => $user->solicitudes()->latest()->first(['estado', 'motivo_rechazo']),
+            // Tokens de la API (solo quien publica): nunca el texto plano, solo metadatos.
+            'tokens' => $user->puedePublicar()
+                ? $user->tokens()
+                    ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                    ->latest()
+                    ->get(['id', 'name', 'last_used_at', 'expires_at'])
+                    ->map(fn ($token) => [
+                        'id' => $token->id,
+                        'nombre' => $token->name,
+                        'ultimo_uso' => $token->last_used_at?->toIso8601String(),
+                        'expira' => $token->expires_at?->toIso8601String(),
+                    ])
+                : [],
         ]);
     }
 }

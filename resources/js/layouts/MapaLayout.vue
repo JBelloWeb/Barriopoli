@@ -17,8 +17,10 @@ import { nombreLegible } from '@/lib/texto'
 const CABA_BBOX = [-58.5315, -34.7053, -58.3352, -34.5265]
 // Abajo queda la tarjeta del barrio: se reserva espacio para que no tape el mapa.
 const MARGEN_CIUDAD = { top: 16, bottom: 150, left: 16, right: 16 }
+// En pantallas bajas (celu en horizontal) la reserva fija dejaba ~150 px para toda CABA.
+const margenCiudad = (alto = typeof window === 'undefined' ? 900 : window.innerHeight) => ({ ...MARGEN_CIUDAD, bottom: Math.min(MARGEN_CIUDAD.bottom, Math.round(alto * 0.22)) })
 const MARGEN_BARRIO = { top: 40, bottom: 210, left: 30, right: 30 }
-const VISTA_CIUDAD = { bounds: CABA_BBOX, fitBoundsOptions: { padding: MARGEN_CIUDAD }, pitch: 0, bearing: 0 }
+const VISTA_CIUDAD = { bounds: CABA_BBOX, fitBoundsOptions: { padding: margenCiudad() }, pitch: 0, bearing: 0 }
 const MARGEN_BOUNDS = 0.015
 
 // Paleta de marca (MapLibre no lee variables CSS).
@@ -167,11 +169,51 @@ const repintarCiudad = () => {
     map.setPaintProperty('ciudad-nombres', 'text-halo-color', haloEtiqueta())
 }
 
+// Extensión geográfica que muestra una cámara (sin inclinación) en el tamaño actual del mapa.
+const extensionVista = ({ center, zoom }) => {
+    const canvas = map.getCanvas()
+    const mundoPx = 512 * 2 ** zoom
+    const medioAncho = canvas.clientWidth / 2 / mundoPx
+    const medioAlto = canvas.clientHeight / 2 / mundoPx
+    const c = maplibregl.MercatorCoordinate.fromLngLat(center)
+    const so = new maplibregl.MercatorCoordinate(c.x - medioAncho, c.y + medioAlto).toLngLat()
+    const ne = new maplibregl.MercatorCoordinate(c.x + medioAncho, c.y - medioAlto).toLngLat()
+    return [[so.lng, so.lat], [ne.lng, ne.lat]]
+}
+
+// Vista ciudad: no se puede alejar más que CABA completa ni arrastrar fuera de ese encuadre.
+// Los límites son exactamente lo que se ve con CABA encuadrada (incluye el margen de la tarjeta).
+let limitesCiudadActivos = false
+const fijarLimitesCiudad = () => {
+    const camara = map.cameraForBounds(CABA_BBOX, { padding: margenCiudad(map.getCanvas().clientHeight), bearing: 0 })
+    if (!camara) return
+    map.setMaxBounds(extensionVista(camara))
+    map.setMinZoom(camara.zoom)
+    limitesCiudadActivos = true
+}
+// Al cambiar el tamaño (rotar el celu, redimensionar la ventana) cambia el encuadre de CABA.
+const alRedimensionar = () => {
+    if (limitesCiudadActivos && !barrio.value) fijarLimitesCiudad()
+}
+
 const mostrarCiudad = () => {
     mostrarCapasCiudad(true)
+    // Se liberan los límites para que la cámara pueda volver desde un barrio (inclinada);
+    // se fijan al terminar el vuelo. Mismo guard de vuelo que mostrarBarrio.
+    const esteVuelo = ++vueloActual
+    limitesCiudadActivos = false
     map.setMaxBounds(null)
     map.setMinZoom(9)
-    map.fitBounds(CABA_BBOX, { padding: MARGEN_CIUDAD, pitch: 0, bearing: 0, duration: duracion(1200) })
+    map.fitBounds(CABA_BBOX, { padding: margenCiudad(map.getCanvas().clientHeight), pitch: 0, bearing: 0, duration: duracion(1200) })
+    const alTerminarVuelo = () => {
+        if (!map || esteVuelo !== vueloActual) return
+        if (map.isMoving()) {
+            map.once('moveend', alTerminarVuelo)
+            return
+        }
+        fijarLimitesCiudad()
+    }
+    map.once('moveend', alTerminarVuelo)
 }
 
 const mostrarBarrio = (datosBarrio, datosEventos) => {
@@ -233,6 +275,7 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     // Se liberan los límites para que la cámara pueda viajar desde el barrio anterior;
     // al terminar el vuelo se vuelven a fijar alrededor del barrio nuevo.
     const esteVuelo = ++vueloActual
+    limitesCiudadActivos = false
     map.setMaxBounds(null)
     map.setMinZoom(9)
     map.fitBounds(caja, { padding: MARGEN_BARRIO, pitch: 50, bearing: -10, duration: duracion(1200) })
@@ -346,6 +389,7 @@ onMounted(() => {
         sincronizar()
         agregarCiudad()
     })
+    map.on('resize', alRedimensionar)
     map.on('click', alHacerClick)
     map.on('mousemove', alMoverMouse)
     map.on('mouseout', () => marcarHover(null))

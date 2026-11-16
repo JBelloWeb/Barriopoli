@@ -3,6 +3,11 @@ import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CampoTexto from '@/components/CampoTexto.vue'
+import Boton from '@/components/ui/Boton.vue'
+import Icono from '@/components/ui/Icono.vue'
+import Insignia from '@/components/ui/Insignia.vue'
+import Tarjeta from '@/components/ui/Tarjeta.vue'
+import { claseError, claseEtiqueta } from '@/lib/campos'
 
 defineProps({ categorias: { type: Array, required: true } })
 
@@ -38,31 +43,39 @@ const eliminar = () => {
 </script>
 
 <template>
-  <button class="mt-4 min-h-12 w-full rounded-lg bg-violeta-oscuro font-bold text-white" @click="abrir()">Nueva categoría</button>
+  <div class="mt-5">
+    <Boton bloque icono="mas" @click="abrir()">Nueva categoría</Boton>
 
-  <ul class="mt-3 divide-y">
-    <li v-for="categoria in categorias" :key="categoria.id">
-      <button class="flex min-h-14 w-full items-center gap-3 text-left" @click="abrir(categoria)">
-        <span class="size-4 shrink-0 rounded-full" :style="{ backgroundColor: categoria.color }" aria-hidden="true"></span>
-        <span class="flex-1">{{ categoria.icono }} {{ categoria.nombre }}</span>
-        <span v-if="!categoria.activa" class="text-sm text-gray-500">Inactiva</span>
-      </button>
-    </li>
-  </ul>
+    <Tarjeta as="ul" sin-padding class="mt-4 divide-y divide-niebla-200 overflow-hidden">
+      <li v-for="categoria in categorias" :key="categoria.id">
+        <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 text-left hover:bg-violeta-50" @click="abrir(categoria)">
+          <span class="size-4 shrink-0 rounded-full ring-2 ring-white" :style="{ backgroundColor: categoria.color }" aria-hidden="true"></span>
+          <span class="flex-1 font-semibold"><span aria-hidden="true">{{ categoria.icono }}</span> {{ categoria.nombre }}</span>
+          <Insignia v-if="!categoria.activa" tono="neutro">Inactiva</Insignia>
+          <Icono nombre="chevron" class="size-5 text-niebla-500" />
+        </button>
+      </li>
+    </Tarjeta>
+  </div>
 
   <BottomSheet v-model="hojaAbierta" :titulo="edicionId ? 'Editar categoría' : 'Nueva categoría'">
     <form class="space-y-4" @submit.prevent="guardar">
       <CampoTexto v-model="form.nombre" etiqueta="Nombre" required :error="form.errors.nombre" />
       <CampoTexto v-model="form.icono" etiqueta="Ícono (un emoji)" :error="form.errors.icono" />
-      <label class="flex min-h-11 items-center justify-between font-bold">
-        Color <input v-model="form.color" type="color" class="h-11 w-16" />
+      <div>
+        <label for="color-categoria" :class="claseEtiqueta">Color</label>
+        <div class="flex items-center gap-3">
+          <input id="color-categoria" v-model="form.color" type="color" class="h-12 w-20 cursor-pointer rounded-xl border-2 border-niebla-200 bg-white p-1" />
+          <span class="font-mono text-sm text-niebla-600">{{ form.color }}</span>
+        </div>
+        <p class="mt-1.5 text-sm text-niebla-600">Se muestra como un punto junto al nombre; el texto siempre va en negro.</p>
+        <p v-if="form.errors.color" :class="claseError"><Icono nombre="alerta" class="mt-px size-4" />{{ form.errors.color }}</p>
+      </div>
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 font-semibold">
+        <input v-model="form.activa" type="checkbox" class="size-5 accent-violeta-700" /> Activa
       </label>
-      <p v-if="form.errors.color" class="text-sm text-red-700">{{ form.errors.color }}</p>
-      <label class="flex min-h-11 items-center gap-2">
-        <input v-model="form.activa" type="checkbox" class="size-5" /> Activa
-      </label>
-      <button :disabled="form.processing" class="min-h-12 w-full rounded-lg bg-violeta-oscuro font-bold text-white">Guardar</button>
-      <button v-if="edicionId" type="button" class="min-h-11 w-full text-red-700" @click="eliminar">Eliminar</button>
+      <Boton tipo="submit" bloque :cargando="form.processing">Guardar</Boton>
+      <Boton v-if="edicionId" variante="fantasma" icono="papelera" bloque class="text-error!" @click="eliminar">Eliminar</Boton>
     </form>
   </BottomSheet>
 </template>

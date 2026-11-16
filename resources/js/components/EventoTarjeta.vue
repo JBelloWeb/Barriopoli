@@ -40,6 +40,8 @@ const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
         <span class="size-2.5 shrink-0 rounded-full" :style="{ backgroundColor: evento.categoria.color }" aria-hidden="true"></span>
         {{ evento.categoria.nombre }}
         <Insignia v-if="evento.cancelado" tono="cancelado" class="ml-auto">Cancelado</Insignia>
+        <!-- Acción propia (p. ej. quitar de la agenda): por encima del área tocable de la tarjeta. -->
+        <span v-if="$slots.accion" class="relative z-10 -my-2 -mr-2" :class="{ 'ml-auto': !evento.cancelado }"><slot name="accion" /></span>
       </p>
       <h3 class="mt-1 text-lg font-bold leading-tight text-tinta" :class="compacta ? 'line-clamp-1' : 'line-clamp-2'">
         <!-- Toda la tarjeta es tocable; el botón queda dentro del título para el lector de pantalla. -->

@@ -8,7 +8,8 @@ defineProps({
 
 const VARIANTES = {
   base: 'bg-white shadow-tarjeta',
-  marca: 'marco-marca bg-violeta-500 text-papel',
+  // violeta-600 y no 500: con texto chico encima, papel sobre 500 da 3.95:1 (no AA); sobre 600, 5.28:1.
+  marca: 'marco-marca bg-violeta-600 text-papel',
   suave: 'bg-durazno-50 ring-1 ring-durazno-200',
   plana: 'bg-white ring-1 ring-niebla-200',
 }

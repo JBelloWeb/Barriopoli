@@ -133,14 +133,14 @@ const contraste = [
       <section>
         <h2 class="text-xs font-bold uppercase tracking-wider text-niebla-600">Recursos</h2>
         <div class="mt-4 grid gap-3 md:grid-cols-2">
-          <div class="marco-marca bg-violeta-500 p-6 text-papel">
+          <div class="marco-marca bg-violeta-600 p-6 text-papel">
             <p class="titulo-marca text-3xl text-durazno-200">Evento de Lanzamiento</p>
             <p class="font-bold">Lugar · La Noche de los Museos</p>
             <div class="mt-6 flex flex-wrap gap-2">
               <span class="pastilla">Noviembre</span><span class="pastilla">20 a 3 h</span><span class="pastilla">Entrada libre</span>
             </div>
           </div>
-          <div class="marco-marca bg-violeta-500 p-6 text-papel">
+          <div class="marco-marca bg-violeta-600 p-6 text-papel">
             <p class="titulo-marca text-3xl text-durazno-200">Pasaporte Barriopoli</p>
             <ol class="mt-4 space-y-3">
               <li v-for="(paso, i) in ['Descargá la app', 'Recorré los barrios', 'Escaneá y sumá sellos']" :key="paso" class="flex items-center gap-3 font-bold">

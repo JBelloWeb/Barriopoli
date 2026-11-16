@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Eventos\CancelarEvento;
+use App\Actions\Eventos\GuardarEvento;
 use App\Enums\EstadoEvento;
 use App\Http\Requests\EventoRequest;
 use App\Http\Resources\EventoResource;
 use App\Models\Categoria;
 use App\Models\Evento;
-use App\Notifications\CambioEnEvento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,13 +66,9 @@ class EventoController extends Controller
         return $this->formulario();
     }
 
-    public function store(EventoRequest $request): RedirectResponse
+    public function store(EventoRequest $request, GuardarEvento $guardar): RedirectResponse
     {
-        $evento = new Evento($request->datosEvento());
-        $evento->user_id = $request->user()->id;
-        $evento->estado = $request->user()->esModerador() ? EstadoEvento::Publicado : EstadoEvento::Pendiente;
-        $this->aplicarImagen($request, $evento);
-        $evento->save();
+        $evento = $guardar->crear($request);
 
         Inertia::flash('exito', $evento->estado === EstadoEvento::Publicado
             ? 'Evento publicado.'
@@ -96,30 +91,9 @@ class EventoController extends Controller
         return $this->formulario($evento, duplicar: true);
     }
 
-    public function update(EventoRequest $request, Evento $evento): RedirectResponse
+    public function update(EventoRequest $request, Evento $evento, GuardarEvento $guardar): RedirectResponse
     {
-        $evento->fill($request->datosEvento());
-
-        // isDirty compara contra el original con casts: un pin idéntico o la misma fecha no disparan reaprobación.
-        $cambioImagen = $request->hasFile('imagen') || $request->boolean('quitar_imagen');
-        $cambioSensible = $cambioImagen || $evento->isDirty(Evento::CAMPOS_SENSIBLES);
-
-        if (! $request->user()->esModerador()) {
-            $vuelveARevision = $evento->estado === EstadoEvento::Rechazado
-                || ($evento->estado === EstadoEvento::Publicado && $cambioSensible);
-
-            if ($vuelveARevision) {
-                $evento->estado = EstadoEvento::Pendiente;
-                $evento->motivo_rechazo = null;
-            }
-        }
-
-        $this->aplicarImagen($request, $evento);
-        $evento->save();
-
-        if ($evento->wasChanged(Evento::CAMPOS_HORARIO)) {
-            Notification::send($evento->agendadoPor, new CambioEnEvento($evento, CambioEnEvento::HORARIO));
-        }
+        $evento = $guardar->actualizar($request, $evento);
 
         Inertia::flash('exito', $evento->estado === EstadoEvento::Pendiente
             ? 'Guardado: el evento queda en revisión.'
@@ -128,12 +102,11 @@ class EventoController extends Controller
         return to_route('mis-eventos');
     }
 
-    public function destroy(Evento $evento): RedirectResponse
+    public function destroy(Evento $evento, CancelarEvento $cancelar): RedirectResponse
     {
         Gate::authorize('delete', $evento);
 
-        Notification::send($evento->agendadoPor, new CambioEnEvento($evento, CambioEnEvento::CANCELADO));
-        $evento->delete();
+        $cancelar($evento);
         Inertia::flash('exito', 'Evento eliminado.');
 
         return to_route('mis-eventos');
@@ -173,20 +146,5 @@ class EventoController extends Controller
                 ->when($evento, fn ($query) => $query->orWhere('id', $evento->categoria_id))
                 ->get(['id', 'nombre', 'icono']),
         ]);
-    }
-
-    private function aplicarImagen(EventoRequest $request, Evento $evento): void
-    {
-        if ($request->hasFile('imagen') || $request->boolean('quitar_imagen')) {
-            if ($evento->imagen_path) {
-                Storage::disk('public')->delete($evento->imagen_path);
-            }
-
-            $evento->imagen_path = null;
-        }
-
-        if ($request->hasFile('imagen')) {
-            $evento->imagen_path = $request->file('imagen')->store('eventos', 'public');
-        }
     }
 }

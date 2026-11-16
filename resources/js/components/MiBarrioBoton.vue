@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 
+import Icono from '@/components/ui/Icono.vue'
+
 const props = defineProps({ barrio: { type: Object, required: true } })
 const page = usePage()
 
@@ -32,11 +34,12 @@ const alternar = () => {
   <button
     v-if="page.props.auth.user"
     type="button"
-    class="min-h-11 shrink-0 rounded-full border px-3 text-sm"
-    :class="esPropio ? 'border-violeta-oscuro bg-violeta-oscuro text-white' : 'border-gray-300 bg-white'"
+    class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition motion-reduce:transition-none"
+    :class="esPropio ? 'bg-violeta-700 text-white' : 'bg-durazno-200 text-violeta-700 hover:bg-durazno-400/60'"
     :aria-pressed="esPropio"
     @click="alternar"
   >
-    {{ esPropio ? '🏠 Mi barrio' : 'Es mi barrio' }}
+    <Icono nombre="casa" :relleno="esPropio" class="size-5" />
+    {{ esPropio ? 'Mi barrio' : 'Es mi barrio' }}
   </button>
 </template>

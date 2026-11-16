@@ -5,6 +5,24 @@ import Logo from '@/components/marca/Logo.vue'
 import Onda from '@/components/marca/Onda.vue'
 import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
 import { nombreLegible } from '@/lib/texto'
+import { ref } from 'vue'
+import Boton from '@/components/ui/Boton.vue'
+import Tarjeta from '@/components/ui/Tarjeta.vue'
+import Insignia from '@/components/ui/Insignia.vue'
+import EstadoVacio from '@/components/ui/EstadoVacio.vue'
+import Esqueleto from '@/components/ui/Esqueleto.vue'
+import CampoTexto from '@/components/CampoTexto.vue'
+import CampoArea from '@/components/ui/CampoArea.vue'
+import CampoSelect from '@/components/ui/CampoSelect.vue'
+import CategoriaChips from '@/components/CategoriaChips.vue'
+
+const texto = ref('Feria de diseño')
+const seleccionChips = ref([2])
+const chips = [
+  { id: 1, nombre: 'Música', color: '#c2410c', icono: '🎵' },
+  { id: 2, nombre: 'Teatro', color: '#7c3aed', icono: '🎭' },
+  { id: 3, nombre: 'Feria', color: '#15803d', icono: '🛍️' },
+]
 
 defineProps({ barrios: { type: Array, default: () => [] } })
 
@@ -131,6 +149,54 @@ const contraste = [
             </ol>
           </div>
         </div>
+      </section>
+
+
+      <section>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-niebla-600">Botones</h2>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <Boton>Primario</Boton>
+          <Boton variante="marca">Marca</Boton>
+          <Boton variante="secundario" icono="calendario">Secundario</Boton>
+          <Boton variante="suave" icono="casa">Suave</Boton>
+          <Boton variante="fantasma" icono="descarga">Fantasma</Boton>
+          <Boton variante="peligro" icono="papelera">Peligro</Boton>
+          <Boton variante="icono" icono="corazon" aria-label="Favorito" />
+          <Boton chico>Chico</Boton>
+          <Boton cargando>Cargando</Boton>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-niebla-600">Campos</h2>
+        <Tarjeta class="mt-4 grid gap-5 md:grid-cols-2">
+          <CampoTexto v-model="texto" etiqueta="Título" ayuda="Hasta 120 caracteres." />
+          <CampoTexto etiqueta="Email" tipo="email" placeholder="vos@ejemplo.com" error="Ingresá un email válido." model-value="hola@" />
+          <CampoSelect etiqueta="Categoría" :opciones="chips.map((c) => ({ valor: c.id, texto: c.nombre }))" model-value="" />
+          <CampoArea etiqueta="Descripción" :filas="3" placeholder="Contá de qué se trata" />
+        </Tarjeta>
+        <CategoriaChips v-model="seleccionChips" :categorias="chips" class="-mx-4 mt-4" />
+      </section>
+
+      <section>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-niebla-600">Insignias y pastillas</h2>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <Insignia tono="publicado">Publicado</Insignia>
+          <Insignia tono="pendiente">En revisión</Insignia>
+          <Insignia tono="rechazado">Rechazado</Insignia>
+          <Insignia tono="cancelado">Cancelado</Insignia>
+          <Insignia>Emprendedor</Insignia>
+          <Insignia tono="neutro">Vecino</Insignia>
+          <Insignia tono="contador">3</Insignia>
+          <span class="pastilla text-sm">sáb 5 dic</span>
+          <span class="pastilla text-sm">18 a 22 h</span>
+        </div>
+      </section>
+
+      <section class="grid gap-3 md:grid-cols-2">
+        <Tarjeta><EstadoVacio texto="Todavía no agendaste eventos."><Boton variante="suave">Explorar eventos</Boton></EstadoVacio></Tarjeta>
+        <Tarjeta v-if="barrios[0]"><EstadoVacio :geojson="barrios[0].geojson" titulo="Sin eventos por ahora" :texto="`Todavía no hay eventos en ${nombreLegible(barrios[0].nombre)}.`" /></Tarjeta>
+        <Tarjeta class="space-y-3 md:col-span-2"><Esqueleto class="h-40" /><Esqueleto class="h-5 w-2/3" /><Esqueleto class="h-5 w-1/3" /></Tarjeta>
       </section>
 
       <section>

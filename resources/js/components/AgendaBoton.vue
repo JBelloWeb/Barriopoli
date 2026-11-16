@@ -1,7 +1,8 @@
 <script setup>
 // Optimista y con recarga parcial de agendaIds: consistente en mapa, listado y detalle.
 import { computed } from 'vue'
-import { Link, router, usePage } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
+import Boton from '@/components/ui/Boton.vue'
 
 const props = defineProps({ evento: { type: Object, required: true } })
 const page = usePage()
@@ -27,22 +28,22 @@ const alternar = () => {
 </script>
 
 <template>
-  <div class="mt-4 flex flex-col gap-2">
-    <button
+  <div class="mt-5 flex flex-col gap-1">
+    <Boton
       v-if="page.props.auth.user"
-      type="button"
-      class="min-h-12 w-full rounded-lg font-bold"
-      :class="agendado ? 'border-2 border-violeta-oscuro text-violeta-oscuro' : 'bg-violeta-oscuro text-white'"
+      :variante="agendado ? 'secundario' : 'primario'"
+      :icono="agendado ? 'check' : 'calendario'"
+      bloque
       :aria-pressed="agendado"
       @click="alternar"
     >
-      {{ agendado ? 'En tu agenda ✓' : 'Agendar' }}
-    </button>
-    <Link v-else href="/login" class="flex min-h-12 w-full items-center justify-center rounded-lg bg-violeta-oscuro font-bold text-white">
-      Ingresá para agendar
-    </Link>
+      {{ agendado ? 'En tu agenda' : 'Agendar' }}
+    </Boton>
+    <Boton v-else href="/login" icono="calendario" bloque>Ingresá para agendar</Boton>
 
     <!-- <a> y no <Link>: Inertia intentaría tratar la descarga como una página. -->
-    <a :href="`/eventos/${evento.id}/calendario.ics`" class="min-h-11 py-2 text-center underline">Agregar a mi calendario</a>
+    <Boton :href="`/eventos/${evento.id}/calendario.ics`" externo variante="fantasma" icono="descarga" chico class="self-center">
+      Agregar a mi calendario
+    </Boton>
   </div>
 </template>

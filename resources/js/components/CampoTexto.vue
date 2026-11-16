@@ -1,28 +1,33 @@
 <script setup>
-import { useId } from 'vue'
+import { computed, useId } from 'vue'
+import Icono from '@/components/ui/Icono.vue'
+import { claseAyuda, claseControl, claseError, claseEtiqueta } from '@/lib/campos'
 
 defineOptions({ inheritAttrs: false })
 const modelo = defineModel({ default: '' })
-defineProps({
+const props = defineProps({
   etiqueta: { type: String, required: true },
   error: { type: String, default: null },
+  ayuda: { type: String, default: null },
   tipo: { type: String, default: 'text' },
 })
 const id = useId()
+const descripcion = computed(() => [props.error && `${id}-error`, props.ayuda && `${id}-ayuda`].filter(Boolean).join(' ') || undefined)
 </script>
 
 <template>
   <div>
-    <label :for="id" class="mb-1 block font-bold">{{ etiqueta }}</label>
+    <label :for="id" :class="claseEtiqueta">{{ etiqueta }}</label>
     <input
       :id="id"
       v-model="modelo"
       v-bind="$attrs"
       :type="tipo"
       :aria-invalid="Boolean(error)"
-      :aria-describedby="error ? `${id}-error` : undefined"
-      class="min-h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:outline-2 focus:outline-violeta"
+      :aria-describedby="descripcion"
+      :class="[claseControl, 'min-h-12']"
     />
-    <p v-if="error" :id="`${id}-error`" class="mt-1 text-sm text-red-700">{{ error }}</p>
+    <p v-if="ayuda && !error" :id="`${id}-ayuda`" :class="claseAyuda">{{ ayuda }}</p>
+    <p v-if="error" :id="`${id}-error`" :class="claseError"><Icono nombre="alerta" class="mt-px size-4" />{{ error }}</p>
   </div>
 </template>

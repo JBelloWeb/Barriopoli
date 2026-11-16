@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\BarrioController;
+use App\Http\Controllers\BarrioGeoController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\MiBarrioController;
@@ -23,6 +24,8 @@ Route::get('/', function (Request $request) {
 })->name('inicio');
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
+// Siluetas simplificadas de los 48 barrios para la vista ciudad (cacheadas).
+Route::get('/geo/barrios.json', BarrioGeoController::class)->name('geo.barrios');
 Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
 Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
 // Pública: la policy 'view' deja descargar solo publicados (o propios).

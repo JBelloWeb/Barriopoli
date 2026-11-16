@@ -1,29 +1,28 @@
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import CampoTexto from '@/components/CampoTexto.vue'
+import Boton from '@/components/ui/Boton.vue'
 
 const form = useForm({ email: '', password: '', remember: true })
 const enviar = () => form.post('/login', { onFinish: () => form.reset('password') })
 </script>
 
 <template>
-  <AuthLayout titulo="Ingresá">
+  <AuthLayout titulo="Ingresá" subtitulo="Descubrí lo que pasa en tu barrio">
     <form class="space-y-4" @submit.prevent="enviar">
       <CampoTexto v-model="form.email" etiqueta="Email" tipo="email" inputmode="email" autocomplete="email" required :error="form.errors.email" />
       <CampoTexto v-model="form.password" etiqueta="Contraseña" tipo="password" autocomplete="current-password" required :error="form.errors.password" />
-      <label class="flex min-h-11 items-center gap-2">
-        <input v-model="form.remember" type="checkbox" class="size-5" /> Mantener la sesión
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 font-semibold">
+        <input v-model="form.remember" type="checkbox" class="size-5 accent-violeta-700" /> Mantener la sesión
       </label>
-      <button :disabled="form.processing" class="min-h-12 w-full rounded-lg bg-violeta-oscuro font-bold text-white disabled:opacity-60">Ingresar</button>
+      <Boton tipo="submit" bloque :cargando="form.processing">Ingresar</Boton>
     </form>
-    <Link href="/forgot-password" class="mt-3 block min-h-11 py-2 text-center underline">Olvidé mi contraseña</Link>
+    <Boton href="/forgot-password" variante="fantasma" chico bloque class="mt-2">Olvidé mi contraseña</Boton>
 
-    <div class="mt-6 border-t border-gray-200 pt-6 text-center">
-      <p class="mb-3 text-gray-600">¿Primera vez en Barriopoli?</p>
-      <Link href="/register" class="flex min-h-12 w-full items-center justify-center rounded-lg border-2 border-violeta-oscuro font-bold text-violeta-oscuro hover:bg-violeta-oscuro hover:text-white">
-        Crear cuenta
-      </Link>
-    </div>
+    <template #pie>
+      <p class="mb-3 font-semibold text-niebla-600">¿Primera vez en Barriopoli?</p>
+      <Boton href="/register" variante="secundario" bloque>Crear cuenta</Boton>
+    </template>
   </AuthLayout>
 </template>

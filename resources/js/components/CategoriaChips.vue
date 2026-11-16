@@ -11,16 +11,20 @@ const alternar = (id) => {
 
 <template>
   <!-- Scroll horizontal con snap en vez de un <select>: se ven las opciones y se elige con un toque. -->
-  <div class="flex snap-x gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]" role="group" aria-label="Filtrar por categoría">
+  <div class="flex snap-x gap-2 overflow-x-auto px-4 py-2.5 [scrollbar-width:none]" role="group" aria-label="Filtrar por categoría">
     <button
       v-for="categoria in categorias"
       :key="categoria.id"
       type="button"
       :aria-pressed="seleccion.includes(categoria.id)"
-      class="flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border bg-white px-3 shadow-sm"
-      :style="seleccion.includes(categoria.id) ? { backgroundColor: categoria.color, borderColor: categoria.color, color: 'white' } : undefined"
+      class="flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-full border-2 px-4 font-semibold transition motion-reduce:transition-none"
+      :class="seleccion.includes(categoria.id)
+        ? 'border-violeta-700 bg-violeta-700 text-white'
+        : 'border-niebla-200 bg-white text-tinta hover:border-violeta-300'"
       @click="alternar(categoria.id)"
     >
+      <!-- El color de la categoría va en un punto: como texto no garantiza contraste. -->
+      <span class="size-2.5 rounded-full ring-2 ring-white/70" :style="{ backgroundColor: categoria.color }" aria-hidden="true"></span>
       <span aria-hidden="true">{{ categoria.icono }}</span>
       {{ categoria.nombre }}
     </button>

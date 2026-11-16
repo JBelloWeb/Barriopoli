@@ -1,14 +1,16 @@
 <script setup>
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import Isotipo from '@/components/marca/Isotipo.vue'
+import Icono from '@/components/ui/Icono.vue'
 
 const page = usePage()
 
 const secciones = computed(() => [
-  { nombre: 'Mapa', href: '/barrios', activaEn: '/barrios', icono: 'M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
-  { nombre: 'Eventos', href: '/eventos', activaEn: '/eventos', icono: 'M4 6h16M4 12h16M4 18h16' },
-  { nombre: 'Agenda', href: '/agenda', activaEn: '/agenda', icono: 'M8 3v4M16 3v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z' },
-  { nombre: 'Perfil', href: page.props.auth?.user ? '/perfil' : '/login', activaEn: '/perfil', icono: 'M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+  { nombre: 'Mapa', href: '/barrios', activaEn: '/barrios', icono: 'pin' },
+  { nombre: 'Eventos', href: '/eventos', activaEn: '/eventos', icono: 'lista' },
+  { nombre: 'Agenda', href: '/agenda', activaEn: '/agenda', icono: 'calendario' },
+  { nombre: 'Perfil', href: page.props.auth?.user ? '/perfil' : '/login', activaEn: '/perfil', icono: 'usuario' },
 ])
 
 const activa = (seccion) => page.url.startsWith(seccion.activaEn)
@@ -17,22 +19,30 @@ const activa = (seccion) => page.url.startsWith(seccion.activaEn)
 <template>
   <nav
     aria-label="Principal"
-    class="flex shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:w-20 md:flex-col md:justify-center md:gap-2 md:border-r md:border-t-0"
+    class="z-20 flex shrink-0 border-t border-niebla-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:w-24 md:flex-col md:items-center md:gap-1 md:border-r md:border-t-0 md:bg-papel md:px-0 md:py-6"
   >
+    <Link href="/barrios" class="mb-6 hidden rounded-2xl p-2 md:block" aria-label="Barriopoli, inicio">
+      <Isotipo class="h-11 w-auto" />
+    </Link>
+
     <Link
       v-for="seccion in secciones"
       :key="seccion.nombre"
       :href="seccion.href"
       :aria-current="activa(seccion) ? 'page' : undefined"
-      class="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs md:flex-none md:py-3"
-      :class="activa(seccion) ? 'font-bold text-violeta-oscuro' : 'text-gray-500'"
+      class="group relative flex min-h-16 flex-1 flex-col items-center justify-center gap-1 text-xs md:w-full md:flex-none"
+      :class="activa(seccion) ? 'font-bold text-violeta-700' : 'font-semibold text-niebla-600 hover:text-violeta-700'"
     >
-      <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path :d="seccion.icono" />
-      </svg>
+      <!-- Píldora detrás del ícono: indica la sección activa sin depender solo del color. -->
+      <span
+        class="grid h-8 w-16 place-items-center rounded-full transition-colors duration-200 motion-reduce:transition-none"
+        :class="activa(seccion) ? 'bg-violeta-100' : 'group-hover:bg-violeta-50'"
+      >
+        <Icono :nombre="seccion.icono" :relleno="false" />
+      </span>
       <span
         v-if="seccion.nombre === 'Agenda' && page.props.avisosSinLeer > 0"
-        class="absolute right-[calc(50%-1.25rem)] top-1 flex size-5 items-center justify-center rounded-full bg-red-700 text-xs text-white md:right-3"
+        class="absolute left-[calc(50%+0.5rem)] top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-durazno-200 px-1.5 text-xs font-bold text-violeta-800 ring-2 ring-white md:ring-papel"
         :aria-label="`${page.props.avisosSinLeer} avisos sin leer`"
       >{{ page.props.avisosSinLeer }}</span>
       {{ seccion.nombre }}

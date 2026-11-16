@@ -4,6 +4,8 @@ import { Link, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import MapaLayout from '@/layouts/MapaLayout.vue'
 import FavoritoBoton from '@/components/FavoritoBoton.vue'
+import Icono from '@/components/ui/Icono.vue'
+import { nombreLegible } from '@/lib/texto'
 
 // Layouts anidados: AppLayout (barra inferior) envuelve a MapaLayout (mapa + buscador).
 // Ambos persisten entre /barrios y /barrios/{slug}, así el mapa no se recarga.
@@ -22,21 +24,33 @@ const favoritos = computed(() => {
 </script>
 
 <template>
-    <div class="pointer-events-auto mx-auto max-w-md rounded-xl bg-white/95 px-4 py-3 shadow-lg">
+    <div class="pointer-events-auto mx-auto max-w-md rounded-tarjeta bg-white/95 p-4 shadow-flotante backdrop-blur">
         <template v-if="favoritos.length">
-            <h1 class="text-sm font-bold text-gray-600">Tus barrios</h1>
-            <ul class="mt-2 flex gap-2 overflow-x-auto [scrollbar-width:none]">
-                <li v-for="b in favoritos" :key="b.id" class="flex shrink-0 items-center rounded-full border border-gray-200 bg-white pl-3">
-                    <Link :href="`/barrios/${b.slug}`" class="flex min-h-11 items-center font-bold">
-                        <span v-if="b.id === page.props.barrioPropioId" class="mr-1" aria-label="Mi barrio">🏠</span>{{ b.nombre }}
+            <h1 class="text-xs font-bold uppercase tracking-wider text-niebla-600">Tus barrios</h1>
+            <ul class="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+                <li v-for="b in favoritos" :key="b.id" class="flex shrink-0 items-center rounded-full pl-4" :class="b.id === page.props.barrioPropioId ? 'bg-durazno-200' : 'bg-durazno-100'">
+                    <Link :href="`/barrios/${b.slug}`" class="flex min-h-11 items-center gap-1.5 font-bold text-violeta-700">
+                        <Icono v-if="b.id === page.props.barrioPropioId" nombre="casa" relleno class="size-4" />
+                        <span v-if="b.id === page.props.barrioPropioId" class="sr-only">Mi barrio:</span>
+                        {{ nombreLegible(b.nombre) }}
                     </Link>
                     <FavoritoBoton :barrio="b" />
                 </li>
             </ul>
         </template>
-        <p v-else class="text-center">
-            Elegí un barrio para explorarlo
-            <span v-if="page.props.auth.user" class="block text-sm text-gray-600">Tocá ♡ para guardarlo en tus barrios.</span>
-        </p>
+        <template v-else>
+            <h1 class="titulo-marca text-xl text-violeta-700">Elegí un barrio</h1>
+            <p class="mt-0.5 text-sm text-niebla-600">
+                Tocalo en el mapa o buscalo arriba.
+                <template v-if="page.props.auth.user"> Con el corazón lo guardás en tus barrios.</template>
+            </p>
+        </template>
+
+        <!-- Leyenda: el color no es la única pista (también está la lista de arriba). -->
+        <ul v-if="page.props.auth.user" class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-niebla-600">
+            <li class="flex items-center gap-1.5"><span class="size-3 rounded-sm bg-durazno-200 ring-1 ring-lila-400"></span> Mi barrio</li>
+            <li class="flex items-center gap-1.5"><span class="size-3 rounded-sm bg-durazno-100 ring-1 ring-lila-400"></span> Favoritos</li>
+            <li class="flex items-center gap-1.5"><span class="size-3 rounded-sm bg-violeta-500 ring-1 ring-lila-400"></span> Otros barrios</li>
+        </ul>
     </div>
 </template>

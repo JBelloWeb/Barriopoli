@@ -3,8 +3,11 @@ import * as maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-const ALTURA_PIN_M = 40
+const ALTURA_PIN_M = 40    // altura mínima en el mundo (zoom cercano)
+const ALTURA_PIN_PX = 44   // altura mínima en pantalla: a zoom de barrio 40 m eran 3–4 px
 const BASE_ALTITUD_M = 10  // sube respecto a los 40 m de la extrusión para evitar z-fighting
+const CIRCUNFERENCIA_M = 40075016.686
+const TAMANO_TESELA = 512
 const COLLIDER_RADIO_M = 28      // ancho clicable (el pin mide ~40 m de ancho)
 const COLLIDER_EXTRA_M = 25      // cuánto sobresale por arriba y por abajo del pin
 
@@ -20,6 +23,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
     // por malla multiplicaría la memoria sin ninguna diferencia visual.
     const materiales = new Map()
     let categoriasVisibles = null // null = todas
+    let eliminada = false
 
     const materialPara = (color, base) => {
         if (!materiales.has(color)) {
@@ -63,12 +67,11 @@ export const crearCapaEventos3D = (features, modelUrl) => {
                     const box = new THREE.Box3().setFromObject(gltf.scene)
                     const size = box.getSize(new THREE.Vector3())
                     const center = box.getCenter(new THREE.Vector3())
-                    const k = ALTURA_PIN_M / (size.y || 1)
+                    const altoModelo = size.y || 1
 
                     features.forEach((f) => {
                         const [lng, lat] = f.geometry.coordinates
                         const mc = maplibregl.MercatorCoordinate.fromLngLat([lng, lat], BASE_ALTITUD_M)
-                        const s = mc.meterInMercatorCoordinateUnits() * k
 
                         const pin = gltf.scene.clone(true)
                         pin.position.set(-center.x, -box.min.y, -center.z)
@@ -85,18 +88,14 @@ export const crearCapaEventos3D = (features, modelUrl) => {
                         group.traverse((o) => { o.frustumCulled = false })
                         scene.add(group)
 
-                        // T · S · R en doble precisión (orden del ejemplo oficial)
-                        const transform = new THREE.Matrix4()
-                            .makeTranslation(mc.x, mc.y, mc.z)
-                            .scale(new THREE.Vector3(s, -s, s))
-                            .multiply(rotX)
-
-                        items.push({ group, rotator, transform, categoriaId: f.properties.categoria_id })
+                        // La escala depende del zoom: el transform se arma en cada render.
+                        items.push({ group, rotator, mc, lat, altoModelo, transform: new THREE.Matrix4(), categoriaId: f.properties.categoria_id })
                     })
                     mapInstance.triggerRepaint()
                 },
                 undefined,
-                (err) => console.error('Error cargando el modelo 3D:', err)
+                // Si se salió del mapa mientras bajaba el modelo, el fetch abortado no es un error.
+                (err) => { if (!eliminada) console.error('Error cargando el modelo 3D:', err) }
             )
         },
 
@@ -109,10 +108,18 @@ export const crearCapaEventos3D = (features, modelUrl) => {
 
             const mapMatrix = new THREE.Matrix4().fromArray(mat)
             const bearing = (mapInstance.getBearing() * Math.PI) / 180
+            const zoom = mapInstance.getZoom()
 
             renderer.resetState()
             for (const it of items) {
                 if (categoriasVisibles && !categoriasVisibles.has(it.categoriaId)) continue
+                // Metros por píxel en la latitud del pin → el pin nunca baja de ALTURA_PIN_PX en pantalla.
+                const metrosPorPx = (CIRCUNFERENCIA_M * Math.cos((it.lat * Math.PI) / 180)) / (TAMANO_TESELA * 2 ** zoom)
+                const alturaM = Math.max(ALTURA_PIN_M, metrosPorPx * ALTURA_PIN_PX)
+                const s = it.mc.meterInMercatorCoordinateUnits() * (alturaM / it.altoModelo)
+                // T · S · R en doble precisión (orden del ejemplo oficial)
+                it.transform.makeTranslation(it.mc.x, it.mc.y, it.mc.z).scale(new THREE.Vector3(s, -s, s)).multiply(rotX)
+
                 it.rotator.rotation.y = bearing
                 camera.projectionMatrix.copy(mapMatrix).multiply(it.transform)
                 it.group.visible = true
@@ -122,6 +129,7 @@ export const crearCapaEventos3D = (features, modelUrl) => {
         },
 
         onRemove() {
+            eliminada = true
             items.length = 0
             materiales.forEach((m) => m.dispose())
             materiales.clear()

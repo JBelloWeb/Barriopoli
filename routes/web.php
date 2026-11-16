@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\BarrioController;
+use App\Http\Controllers\BarrioGeoController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\MiBarrioController;
@@ -23,6 +24,8 @@ Route::get('/', function (Request $request) {
 })->name('inicio');
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
+// Siluetas simplificadas de los 48 barrios para la vista ciudad (cacheadas).
+Route::get('/geo/barrios.json', BarrioGeoController::class)->name('geo.barrios');
 Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
 Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
 // Pública: la policy 'view' deja descargar solo publicados (o propios).
@@ -76,3 +79,12 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
     Route::post('/eventos/{evento}/aprobar', [ModeracionEventoController::class, 'aprobar'])->name('eventos.aprobar');
     Route::post('/eventos/{evento}/rechazar', [ModeracionEventoController::class, 'rechazar'])->name('eventos.rechazar');
 });
+
+// Guía de estilos (PLAN-07): solo en local, para validar tokens y componentes.
+if (app()->isLocal()) {
+    Route::get('/dev/estilos', fn () => Inertia\Inertia::render('Dev/Estilos', [
+        'barrios' => App\Models\Barrio::whereIn('slug', ['palermo', 'boca', 'villa-devoto', 'nueva-pompeya', 'villa-riachuelo', 'san-nicolas'])
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'slug', 'geojson']),
+    ]))->name('dev.estilos');
+}

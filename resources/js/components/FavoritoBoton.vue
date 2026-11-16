@@ -3,7 +3,11 @@
 import { computed } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 
+import Icono from '@/components/ui/Icono.vue'
+import { nombreLegible } from '@/lib/texto'
+
 const props = defineProps({ barrio: { type: Object, required: true } })
+const nombre = computed(() => nombreLegible(props.barrio.nombre))
 const page = usePage()
 
 const esFavorito = computed(() => (page.props.favoritosIds ?? []).includes(props.barrio.id))
@@ -33,13 +37,15 @@ const alternar = () => {
   <button
     v-if="page.props.auth.user"
     type="button"
-    class="flex min-h-11 min-w-11 items-center justify-center text-2xl"
-    :class="esFavorito ? 'text-red-600' : 'text-gray-400'"
+    class="grid size-11 shrink-0 place-items-center rounded-full transition hover:bg-violeta-50 active:scale-90 motion-reduce:transition-none"
+    :class="esFavorito ? 'text-violeta-500' : 'text-niebla-600'"
     :aria-pressed="esFavorito"
-    :aria-label="esFavorito ? `Quitar ${barrio.nombre} de favoritos` : `Agregar ${barrio.nombre} a favoritos`"
+    :aria-label="esFavorito ? `Quitar ${nombre} de favoritos` : `Agregar ${nombre} a favoritos`"
     @click.stop.prevent="alternar"
   >
-    {{ esFavorito ? '♥' : '♡' }}
+    <Icono nombre="corazon" :relleno="esFavorito" />
   </button>
-  <Link v-else href="/login" class="flex min-h-11 min-w-11 items-center justify-center text-2xl text-gray-400" aria-label="Ingresá para guardar favoritos">♡</Link>
+  <Link v-else href="/login" class="grid size-11 shrink-0 place-items-center rounded-full text-niebla-600 hover:bg-violeta-50" aria-label="Ingresá para guardar favoritos">
+    <Icono nombre="corazon" />
+  </Link>
 </template>

@@ -1,7 +1,7 @@
 <script setup>
 // Dirección → Nominatim (vía servidor) → pin arrastrable. El barrio lo confirma el servidor con ST_Contains.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { maplibregl, ESTILO_MAPA, CENTRO_CABA } from '@/lib/mapa'
+import { maplibregl, ESTILO_MAPA, CENTRO_CABA, aplicarEstiloBarriopoli } from '@/lib/mapa'
 import Boton from '@/components/ui/Boton.vue'
 import Icono from '@/components/ui/Icono.vue'
 import { claseControl, claseError, claseEtiqueta } from '@/lib/campos'
@@ -26,9 +26,12 @@ const pedirJson = async (url) => {
   return respuesta.json()
 }
 
-const detectarBarrio = async () => {
+// Coordenadas explícitas: con defineModel, latitud.value recién asignado sigue valiendo lo anterior
+// hasta que el padre vuelve a renderizar (el primer toque mandaba null → 422, y después se
+// detectaba siempre el barrio del punto previo).
+const detectarBarrio = async (lat, lng) => {
   try {
-    const datos = await pedirJson(`/geocodificar/barrio?latitud=${latitud.value}&longitud=${longitud.value}`)
+    const datos = await pedirJson(`/geocodificar/barrio?latitud=${lat}&longitud=${lng}`)
     barrio.value = datos.barrio
     mensaje.value = datos.barrio ? null : 'Ese punto está fuera de CABA.'
   } catch {
@@ -45,7 +48,7 @@ const ubicar = (lat, lng, moverMapa = true) => {
       const posicion = marcador.getLngLat()
       latitud.value = posicion.lat
       longitud.value = posicion.lng
-      detectarBarrio()
+      detectarBarrio(posicion.lat, posicion.lng)
     })
   } else {
     marcador.setLngLat([lng, lat])
@@ -90,13 +93,15 @@ onMounted(() => {
     // Atribución obligatoria pero plegada: en 360 px tapaba un tercio del mapa.
     attributionControl: { compact: true },
   })
+  // Misma paleta que el mapa principal (parques en verde salvia, edificios lavanda).
+  map.on('load', () => aplicarEstiloBarriopoli(map))
   map.on('click', (evento) => {
     ubicar(evento.lngLat.lat, evento.lngLat.lng, false)
-    detectarBarrio()
+    detectarBarrio(evento.lngLat.lat, evento.lngLat.lng)
   })
   if (hayPunto) {
     ubicar(latitud.value, longitud.value, false)
-    detectarBarrio()
+    detectarBarrio(latitud.value, longitud.value)
   }
 })
 

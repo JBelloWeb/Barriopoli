@@ -62,3 +62,18 @@ it('bloquea el login tras cinco intentos fallidos', function () {
 it('manda al login a quien entra al perfil sin sesión', function () {
     $this->get('/perfil')->assertRedirect('/login');
 });
+
+it('no cierra sesión con GET /logout: con sesión lleva al perfil, sin sesión al mapa', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/logout')->assertRedirect('/perfil');
+    $this->assertAuthenticatedAs($user);
+
+    auth()->logout();
+    $this->get('/logout')->assertRedirect('/barrios');
+});
+
+it('cierra sesión con POST /logout', function () {
+    $this->actingAs(User::factory()->create())->post('/logout')->assertRedirect();
+    $this->assertGuest();
+});

@@ -76,3 +76,12 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
     Route::post('/eventos/{evento}/aprobar', [ModeracionEventoController::class, 'aprobar'])->name('eventos.aprobar');
     Route::post('/eventos/{evento}/rechazar', [ModeracionEventoController::class, 'rechazar'])->name('eventos.rechazar');
 });
+
+// Guía de estilos (PLAN-07): solo en local, para validar tokens y componentes.
+if (app()->isLocal()) {
+    Route::get('/dev/estilos', fn () => Inertia\Inertia::render('Dev/Estilos', [
+        'barrios' => App\Models\Barrio::whereIn('slug', ['palermo', 'boca', 'villa-devoto', 'nueva-pompeya', 'villa-riachuelo', 'san-nicolas'])
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'slug', 'geojson']),
+    ]))->name('dev.estilos');
+}

@@ -19,7 +19,7 @@ const activa = (seccion) => page.url.startsWith(seccion.activaEn)
 <template>
   <nav
     aria-label="Principal"
-    class="z-20 flex shrink-0 border-t border-niebla-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:w-24 md:flex-col md:items-center md:gap-1 md:border-r md:border-t-0 md:bg-papel md:px-0 md:py-6"
+    class="z-20 flex shrink-0 border-t border-lila-200 bg-lila-100/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:w-24 md:flex-col md:items-center md:gap-1 md:border-r md:border-t-0 md:bg-lila-100 md:px-0 md:py-6"
   >
     <Link href="/barrios" class="mb-6 hidden rounded-2xl p-2 md:block" aria-label="Barriopoli, inicio">
       <Isotipo class="h-11 w-auto" />
@@ -36,13 +36,13 @@ const activa = (seccion) => page.url.startsWith(seccion.activaEn)
       <!-- Píldora detrás del ícono: indica la sección activa sin depender solo del color. -->
       <span
         class="grid h-8 w-16 place-items-center rounded-full transition-colors duration-200 motion-reduce:transition-none"
-        :class="activa(seccion) ? 'bg-violeta-100' : 'group-hover:bg-violeta-50'"
+        :class="activa(seccion) ? 'bg-lila-200' : 'group-hover:bg-white/60'"
       >
         <Icono :nombre="seccion.icono" :relleno="false" />
       </span>
       <span
         v-if="seccion.nombre === 'Agenda' && page.props.avisosSinLeer > 0"
-        class="absolute left-[calc(50%+0.5rem)] top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-durazno-200 px-1.5 text-xs font-bold text-violeta-800 ring-2 ring-white md:ring-papel"
+        class="absolute left-[calc(50%+0.5rem)] top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-durazno-200 px-1.5 text-xs font-bold text-violeta-800 ring-2 ring-lila-100"
         :aria-label="`${page.props.avisosSinLeer} avisos sin leer`"
       >{{ page.props.avisosSinLeer }}</span>
       {{ seccion.nombre }}

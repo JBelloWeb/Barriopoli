@@ -4,7 +4,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { bbox, buffer, mask, rewind, simplify } from '@turf/turf'
-import { maplibregl, ESTILO_MAPA } from '@/lib/mapa'
+import { maplibregl, ESTILO_MAPA, aplicarEstiloBarriopoli } from '@/lib/mapa'
 import BarrioSelector from '@/components/BarrioSelector.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import CategoriaChips from '@/components/CategoriaChips.vue'
@@ -83,6 +83,9 @@ const categoriasDelBarrio = computed(() => {
 const contenedor = ref(null)
 let map = null
 let capaEventos = null
+// isStyleLoaded() da false mientras cualquier fuente recarga teselas (o tras un setFilter del estilo
+// de marca): como guarda dejaba el barrio sin dibujar. Basta saber que el estilo ya cargó una vez.
+let estiloCargado = false
 
 const parsear = (dato) => (typeof dato === 'string' ? JSON.parse(dato) : dato)
 
@@ -201,11 +204,12 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
             paint: { 'line-color': COLOR.lila, 'line-width': contorno.ancho, 'line-opacity': 0, 'line-offset': 0 },
         })
     })
+    // Tinte durazno plano (antes era una losa 3D de 10 m que ahora taparía los edificios 3D).
     map.addLayer({
         id: 'barrio-3d-extrusion',
-        type: 'fill-extrusion',
+        type: 'fill',
         source: 'barrio',
-        paint: { 'fill-extrusion-color': COLOR.durazno, 'fill-extrusion-height': 10, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.15 },
+        paint: { 'fill-color': COLOR.durazno, 'fill-opacity': 0.12 },
     })
     map.addLayer({ id: 'barrio-borde', type: 'line', source: 'barrio', paint: { 'line-color': COLOR.durazno, 'line-width': 3 } })
 
@@ -285,7 +289,7 @@ const aplicarFiltro = (ids) => {
 }
 
 const sincronizar = () => {
-    if (!map?.isStyleLoaded()) return
+    if (!map || !estiloCargado) return
     limpiarCapas()
     if (barrio.value) mostrarBarrio(barrio.value, eventos.value)
     else mostrarCiudad()
@@ -337,6 +341,8 @@ onMounted(() => {
     // Solo en desarrollo: acceso al mapa desde la consola y los tests E2E. Vite lo elimina del build.
     if (import.meta.env.DEV) window.__mapa = map
     map.on('load', () => {
+        estiloCargado = true
+        aplicarEstiloBarriopoli(map)
         sincronizar()
         agregarCiudad()
     })

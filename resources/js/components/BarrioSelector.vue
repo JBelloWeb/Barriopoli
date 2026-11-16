@@ -51,7 +51,7 @@ const alPresionarTecla = (evento) => {
             role="combobox"
             aria-controls="lista-barrios"
             :aria-expanded="abierto"
-            class="min-h-12 w-full rounded-full border-2 border-niebla-200 bg-white pl-11 pr-4 text-base font-semibold text-tinta placeholder:font-normal placeholder:text-niebla-500 focus:border-violeta-500 focus:outline-none focus:ring-4 focus:ring-violeta-100"
+            class="min-h-12 w-full rounded-full border-2 border-lila-200 bg-white pl-11 pr-4 text-base font-semibold text-tinta placeholder:font-normal placeholder:text-niebla-500 focus:border-violeta-500 focus:outline-none focus:ring-4 focus:ring-violeta-100"
             @focus="abierto = true"
             @click="abierto = true"
             @input="abierto = true"

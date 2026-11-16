@@ -361,7 +361,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="flex h-full flex-col">
-        <header class="relative z-20 flex shrink-0 items-center gap-3 border-b border-niebla-200 bg-papel px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <header class="relative z-20 flex shrink-0 items-center gap-3 border-b border-lila-200 bg-lila-100 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <!-- En mobile la marca vive acá; en desktop está en la barra lateral. -->
             <Isotipo class="h-9 w-auto shrink-0 md:hidden" titulo="Barriopoli" />
             <BarrioSelector :barrios="barrios" :actual="barrio" @selected="irABarrio" />
@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
             v-if="barrio && categoriasDelBarrio.length"
             v-model="seleccion"
             :categorias="categoriasDelBarrio"
-            class="relative z-10 shrink-0 border-b border-niebla-200 bg-papel"
+            class="relative z-10 shrink-0 border-b border-lila-200 bg-lila-100"
         />
         <div class="relative min-h-0 flex-1">
             <!-- El absolute va en un envoltorio: maplibre-gl.css fuerza position:relative en

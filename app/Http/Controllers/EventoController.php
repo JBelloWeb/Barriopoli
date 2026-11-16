@@ -17,7 +17,7 @@ use Inertia\Response;
 
 class EventoController extends Controller
 {
-    public const RELACIONES = ['categoria', 'barrio:id,nombre,slug', 'autor:id,name,emprendimiento'];
+    public const RELACIONES = ['categoria', 'barrio:id,nombre,slug', 'autor:id,name,emprendimiento,rol'];
 
     public function index(Request $request): Response
     {

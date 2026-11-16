@@ -21,16 +21,7 @@ class AgendaController extends Controller
         $user = $request->user();
         $vista = $request->query('vista') === 'pasados' ? 'pasados' : 'proximos';
 
-        // withTrashed: el evento cancelado se conserva con la etiqueta "Cancelado".
-        // Se ocultan los rechazados (p. ej. editados y rechazados después de agendarlos).
-        $eventos = $user->eventosAgendados()
-            ->withTrashed()
-            ->where(fn ($query) => $query->whereNotNull('eventos.deleted_at')->orWhere('estado', '!=', EstadoEvento::Rechazado))
-            ->with(EventoController::RELACIONES);
-
-        $eventos = $vista === 'proximos'
-            ? $eventos->vigentes()->orderBy('inicio')
-            : $eventos->whereRaw('COALESCE(eventos.fin, eventos.inicio) < ?', [now()])->orderByDesc('inicio');
+        $eventos = $user->agendaVisible($vista)->with(EventoController::RELACIONES);
 
         $avisos = $user->unreadNotifications()->latest()->get()->map(fn ($aviso) => [
             'id' => $aviso->id,

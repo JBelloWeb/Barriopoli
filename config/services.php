@@ -28,6 +28,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Nominatim exige identificar la app en el User-Agent (con un contacto real).
+    'nominatim' => [
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'Barriopoli/1.0'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

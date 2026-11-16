@@ -1,21 +1,146 @@
 @import 'tailwindcss';
 
+@source '../js/**/*.vue';
+@source '../views/**/*.blade.php';
+
+/* Rosario variable 300–700 (Google Fonts, OFL), subset latín: incluye ñ, tildes y ¿¡. */
 @font-face {
     font-family: 'Rosario';
-    src: url('/fonts/Rosario-Bold.ttf') format('truetype');
-    font-weight: normal;
+    src: url('/fonts/Rosario-Variable-latin.woff2') format('woff2');
+    font-weight: 300 700;
     font-style: normal;
     font-display: swap;
 }
 
-@source '../js/**/*.vue';
-@source '../views/**/*.blade.php';
-
+/*
+ * Identidad Barriopoli (PLAN-07). Paleta tomada del .pptx de marca:
+ * violeta #8E66CC · lila #B37DFF · durazno #FFDEB6 · blanco cálido #F6F7EE · tinta #080713.
+ * Contraste: violeta-500 no alcanza AA para texto chico (3.95:1 sobre papel) → texto con violeta-700+.
+ */
 @theme {
-    --font-rosario: 'Rosario', sans-serif;
+    --font-sans: 'Rosario', ui-sans-serif, system-ui, sans-serif;
+
+    --color-violeta-50: #f5f0fc;
+    --color-violeta-100: #ebe2f8;
+    --color-violeta-200: #d8c7f1;
+    --color-violeta-300: #bba0e5;
+    --color-violeta-400: #a483d9;
+    --color-violeta-500: #8e66cc; /* marca: superficies, íconos, títulos ≥ 24 px */
+    --color-violeta-600: #7752b8;
+    --color-violeta-700: #5f3f96; /* texto y botón primario (7.4:1 sobre papel) */
+    --color-violeta-800: #4a2f7a;
+    --color-violeta-900: #33205a;
+
+    /* Lila: solo decorativo (líneas de contorno, marcos, fondos de selección). */
+    --color-lila-100: #f1e6ff;
+    --color-lila-200: #e0c8ff;
+    --color-lila-400: #b37dff; /* marca */
+
+    /* Durazno: pastillas, acentos, títulos grandes sobre violeta. */
+    --color-durazno-50: #fff7ec;
+    --color-durazno-100: #ffecd5;
+    --color-durazno-200: #ffdeb6; /* marca */
+    --color-durazno-400: #f5b979;
+
+    --color-papel: #f6f7ee; /* blanco cálido de marca: fondo de la app */
+    --color-tinta: #080713; /* texto principal (18.5:1 sobre papel) */
+
+    /* Neutros teñidos de violeta (reemplazan gray-*). */
+    --color-niebla-100: #eeedf2;
+    --color-niebla-200: #e2e0e9;
+    --color-niebla-300: #c9c5d4;
+    --color-niebla-500: #7a7489; /* placeholder e íconos inactivos: 4.15:1, NO texto */
+    --color-niebla-600: #5d586b; /* texto secundario: 6.3:1 papel · 6.8:1 blanco */
+
+    --color-exito: #1f7a4d;
+    --color-alerta: #9a5b00;
+    --color-error: #b42318;
+
+    --radius-tarjeta: 1.5rem;
+    --shadow-tarjeta: 0 10px 30px -12px rgb(95 63 150 / 0.28);
+    --shadow-flotante: 0 16px 40px -12px rgb(51 32 90 / 0.35);
+
+    --ease-marca: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Fuerza a todo el sitio a usar la tipografía */
-html, body {
-    font-family: 'Rosario', sans-serif !important;
+@layer base {
+    /* Tailwind v4 usa currentColor como borde por defecto; se usa el neutro de marca. */
+    *, ::after, ::before, ::backdrop, ::file-selector-button {
+        border-color: var(--color-niebla-200, currentColor);
+    }
+
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background-color: var(--color-papel);
+        color: var(--color-tinta);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior-y: none;
+    }
+
+    :focus-visible {
+        outline: 3px solid var(--color-violeta-700);
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background-color: var(--color-lila-200);
+        color: var(--color-tinta);
+    }
+}
+
+/* Recursos de marca como utilidades (Tailwind v4). */
+@utility marco-marca {
+    border: 2px solid var(--color-lila-400);
+    border-radius: var(--radius-tarjeta);
+}
+
+@utility pastilla {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--color-durazno-200);
+    color: var(--color-violeta-700);
+    font-weight: 700;
+    line-height: 1.25;
+    padding: 0.375rem 0.875rem;
+}
+
+@utility titulo-marca {
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+}
+
+.sheet-enter-active, .sheet-leave-active { transition: transform 240ms var(--ease-marca); }
+.sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+
+.aviso { animation: aviso-salida 4s forwards; }
+
+@keyframes aviso-salida {
+    0%, 85% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
+/* Expansión de las líneas de contorno de SiluetaBarrio (el "Offset Path" de la marca). */
+.contorno-expande {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: contorno-expansion 800ms var(--ease-marca) both;
+    animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes contorno-expansion {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sheet-enter-active, .sheet-leave-active { transition: none; }
+    .contorno-expande { animation: none; }
 }

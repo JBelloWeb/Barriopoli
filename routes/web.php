@@ -22,6 +22,10 @@ Route::get('/', function (Request $request) {
 
     return $slug ? to_route('barrios.show', $slug) : to_route('barrios.index');
 })->name('inicio');
+// /logout solo cierra sesión por POST (Fortify). Si alguien abre la URL a mano o la recarga,
+// no se lo desloguea (un GET que cierra sesión es vulnerable a CSRF): se lo lleva a donde está "Salir".
+Route::get('/logout', fn (Request $request) => $request->user() ? to_route('perfil') : to_route('barrios.index'))
+    ->name('logout.get');
 Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
 // Siluetas simplificadas de los 48 barrios para la vista ciudad (cacheadas).

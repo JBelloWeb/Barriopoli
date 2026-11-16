@@ -10,7 +10,8 @@ const props = defineProps({
   separacion: { type: Number, default: 0.12 }, // km entre líneas
   relleno: { type: String, default: 'var(--color-durazno-200)' },
   linea: { type: String, default: 'var(--color-lila-400)' },
-  grosor: { type: Number, default: 1.5 }, // px en pantalla (non-scaling-stroke)
+  grosor: { type: Number, default: 2.25 }, // px en pantalla (non-scaling-stroke)
+  animar: { type: Boolean, default: true }, // expansión de los contornos al montarse
 })
 
 // Los 48 barrios no cambian: se memoriza el SVG por geometría.
@@ -53,10 +54,13 @@ const dibujo = computed(() => {
 
 <template>
   <svg :viewBox="dibujo.viewBox" fill="none" aria-hidden="true" class="overflow-visible">
+    <!-- De adentro hacia afuera: cada anillo arranca un poco después (--i) y "sale" del barrio. -->
     <path
       v-for="(d, i) in dibujo.anillos"
       :key="i"
       :d="d"
+      :class="{ 'contorno-expande': animar }"
+      :style="{ '--i': i }"
       :stroke="linea"
       :stroke-width="grosor"
       stroke-linejoin="round"

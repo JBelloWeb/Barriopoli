@@ -127,6 +127,20 @@
     100% { opacity: 0; visibility: hidden; }
 }
 
+/* Expansión de las líneas de contorno de SiluetaBarrio (el "Offset Path" de la marca). */
+.contorno-expande {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: contorno-expansion 800ms var(--ease-marca) both;
+    animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes contorno-expansion {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sheet-enter-active, .sheet-leave-active { transition: none; }
+    .contorno-expande { animation: none; }
 }

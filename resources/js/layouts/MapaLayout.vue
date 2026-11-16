@@ -3,7 +3,7 @@
 // navegación entre /barrios y /barrios/{slug}. Solo cambian las capas.
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
-import { bbox, buffer, mask } from '@turf/turf'
+import { bbox, buffer, mask, rewind, simplify } from '@turf/turf'
 import { maplibregl, ESTILO_MAPA } from '@/lib/mapa'
 import BarrioSelector from '@/components/BarrioSelector.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -30,8 +30,24 @@ const COLOR = {
     duraznoClaro: '#ffecd5',
     papel: '#f6f7ee',
 }
-// Líneas de contorno alrededor del barrio (el "Offset Path" de la marca), en km.
-const CONTORNOS_KM = [0.05, 0.1, 0.15]
+// Líneas de contorno alrededor del barrio (el "Offset Path" de la marca).
+// La posición final es un buffer geométrico exacto (Turf: resuelve bien las esquinas cóncavas).
+// La expansión se anima con line-offset (transición nativa de MapLibre): cada anillo arranca
+// corrido hacia adentro, sobre el borde del barrio, y se desliza hasta su lugar real (offset 0).
+// La distancia en metros se calcula con el zoom en el que termina la cámara (cameraForBounds):
+// así hay siempre ~CONTORNO_SEPARACION_PX entre líneas, sea Palermo o San Telmo, en celu o desktop.
+const CONTORNO_SEPARACION_PX = 11
+const CONTORNOS = [
+    { ancho: 3, opacidad: 1 },
+    { ancho: 2.5, opacidad: 0.8 },
+    { ancho: 2, opacidad: 0.6 },
+]
+const CONTORNO_EXPANSION_MS = 900
+const CONTORNO_ESCALON_MS = 150
+const capasContorno = CONTORNOS.map((_, i) => `barrio-contorno-${i}`)
+const fuentesContorno = CONTORNOS.map((_, i) => `contorno-${i}`)
+let vueloActual = 0 // identifica el último fitBounds a un barrio
+const metrosPorPixel = (lat, zoom) => (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (512 * 2 ** zoom)
 const FUENTE_ETIQUETAS = ['Montserrat SemiBold', 'Open Sans Bold', 'Noto Sans Regular']
 
 const reducirMovimiento = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -71,10 +87,10 @@ let capaEventos = null
 const parsear = (dato) => (typeof dato === 'string' ? JSON.parse(dato) : dato)
 
 const limpiarCapas = () => {
-    for (const capa of ['eventos-puntos', 'eventos-3d', 'barrio-borde', 'barrio-contornos', 'barrio-3d-extrusion', 'mascara-exteriores']) {
+    for (const capa of ['eventos-puntos', 'eventos-3d', 'barrio-borde', ...capasContorno, 'barrio-3d-extrusion', 'mascara-exteriores']) {
         if (map.getLayer(capa)) map.removeLayer(capa)
     }
-    for (const fuente of ['eventos', 'barrio', 'contornos', 'mascara']) {
+    for (const fuente of ['eventos', 'barrio', ...fuentesContorno, 'mascara']) {
         if (map.getSource(fuente)) map.removeSource(fuente)
     }
     eventoActivoId.value = null
@@ -162,16 +178,28 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     mostrarCapasCiudad(false)
     map.addSource('barrio', { type: 'geojson', data: geo })
     map.addSource('mascara', { type: 'geojson', data: mask(geo) })
-    map.addSource('contornos', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: CONTORNOS_KM.map((km) => buffer(geo, km, { units: 'kilometers', steps: 8 })) },
-    })
     map.addLayer({ id: 'mascara-exteriores', type: 'fill', source: 'mascara', paint: { 'fill-color': COLOR.violeta, 'fill-opacity': 0.92 } })
-    map.addLayer({
-        id: 'barrio-contornos',
-        type: 'line',
-        source: 'contornos',
-        paint: { 'line-color': COLOR.lila, 'line-width': 1.5, 'line-opacity': 0.9 },
+    // Buffers sobre la geometría simplificada (~20 m, invisible a esta escala y mucho más rápido).
+    // Winding RFC 7946 (exterior antihorario): con el eje Y de pantalla invertido, un offset
+    // POSITIVO corre la línea hacia adentro del barrio, que es donde arranca la animación.
+    const base = simplify(geo, { tolerance: 0.0002, highQuality: true })
+    const caja = bbox(geo)
+    const camara = map.cameraForBounds(caja, { padding: MARGEN_BARRIO, pitch: 50, bearing: -10 })
+    const metrosPx = metrosPorPixel((caja[1] + caja[3]) / 2, camara?.zoom ?? 13.5)
+    const separacionesPx = CONTORNOS.map((_, i) => CONTORNO_SEPARACION_PX * (i + 1))
+    CONTORNOS.forEach((contorno, i) => {
+        map.addSource(fuentesContorno[i], {
+            type: 'geojson',
+            data: rewind(buffer(base, (separacionesPx[i] * metrosPx) / 1000, { units: 'kilometers', steps: 8 }), { reverse: false }),
+        })
+        // Invisibles hasta que termina el vuelo de la cámara (ver expandirContornos).
+        map.addLayer({
+            id: capasContorno[i],
+            type: 'line',
+            source: fuentesContorno[i],
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': COLOR.lila, 'line-width': contorno.ancho, 'line-opacity': 0, 'line-offset': 0 },
+        })
     })
     map.addLayer({
         id: 'barrio-3d-extrusion',
@@ -200,18 +228,50 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
 
     // Se liberan los límites para que la cámara pueda viajar desde el barrio anterior;
     // al terminar el vuelo se vuelven a fijar alrededor del barrio nuevo.
-    const caja = bbox(geo)
+    const esteVuelo = ++vueloActual
     map.setMaxBounds(null)
     map.setMinZoom(9)
     map.fitBounds(caja, { padding: MARGEN_BARRIO, pitch: 50, bearing: -10, duration: duracion(1200) })
-    map.once('moveend', () => {
-        if (barrio.value?.id !== datosBarrio.id) return
+    // Un moveend puede llegar antes de tiempo (p. ej. de un movimiento anterior que fitBounds
+    // interrumpe): se ignora si es de otro vuelo y, si la cámara sigue en movimiento, se espera al próximo.
+    // Sin esto, la expansión se calculaba con el zoom de la ciudad y arrancaba casi sin recorrido.
+    const alTerminarVuelo = () => {
+        if (esteVuelo !== vueloActual || barrio.value?.id !== datosBarrio.id) return
+        if (map.isMoving()) {
+            map.once('moveend', alTerminarVuelo)
+            return
+        }
+        expandirContornos(separacionesPx)
         map.setMaxBounds([
             [caja[0] - MARGEN_BOUNDS, caja[1] - MARGEN_BOUNDS],
             [caja[2] + MARGEN_BOUNDS, caja[3] + MARGEN_BOUNDS],
         ])
         map.setMinZoom(12)
+    }
+    map.once('moveend', alTerminarVuelo)
+}
+
+// 1) Sin transición: cada anillo se corre hacia adentro su distancia en píxeles (queda sobre el borde).
+// 2) En el cuadro siguiente, con transición: vuelve a offset 0 (su buffer real) mientras aparece.
+// Las transiciones de pintura de MapLibre interpolan desde el valor vigente hasta el nuevo.
+const expandirContornos = (separacionesPx) => {
+    const vigentes = capasContorno.filter((id) => map.getLayer(id))
+    if (!vigentes.length) return
+
+    vigentes.forEach((id, i) => {
+        map.setPaintProperty(id, 'line-offset-transition', { duration: 0, delay: 0 })
+        map.setPaintProperty(id, 'line-offset', separacionesPx[i])
     })
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        vigentes.forEach((id, i) => {
+            if (!map?.getLayer(id)) return
+            const escalon = { duration: duracion(CONTORNO_EXPANSION_MS), delay: duracion(i * CONTORNO_ESCALON_MS) }
+            map.setPaintProperty(id, 'line-offset-transition', escalon)
+            map.setPaintProperty(id, 'line-opacity-transition', { ...escalon, duration: duracion(CONTORNO_EXPANSION_MS / 2) })
+            map.setPaintProperty(id, 'line-offset', 0)
+            map.setPaintProperty(id, 'line-opacity', CONTORNOS[i].opacidad)
+        })
+    }))
 }
 
 // Se filtra en dos capas: el pin 3D (Three.js) y la zona táctil (circle de MapLibre).

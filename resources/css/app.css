@@ -61,11 +61,6 @@
     --shadow-flotante: 0 16px 40px -12px rgb(51 32 90 / 0.35);
 
     --ease-marca: cubic-bezier(0.2, 0.8, 0.2, 1);
-
-    /* Alias temporales de los nombres viejos. Se borran en la Fase 6 de PLAN-07. */
-    --color-violeta: #8e66cc;
-    --color-violeta-oscuro: #5f3f96;
-    --color-crema: #ffdeb6;
 }
 
 @layer base {

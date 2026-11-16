@@ -32,3 +32,11 @@ it('sirve las siluetas simplificadas de los barrios como GeoJSON cacheable', fun
     expect($lon)->toBeBetween(-58.6, -58.3)->and($lat)->toBeBetween(-34.75, -34.5)
         ->and(strlen($respuesta->getContent()))->toBeLessThan(80_000);
 });
+
+it('muestra la página de error de marca para un 404 web y JSON para la API', function () {
+    $this->get('/barrios/no-existe')
+        ->assertNotFound()
+        ->assertInertia(fn ($page) => $page->component('Errores/Estado')->where('estado', 404));
+
+    $this->getJson('/api/v1/barrios/no-existe')->assertNotFound()->assertJsonStructure(['message']);
+});

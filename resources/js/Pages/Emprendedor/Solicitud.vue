@@ -29,7 +29,7 @@ const pasos = [
       <ol class="relative mt-5 space-y-3">
         <li v-for="([titulo, texto], i) in pasos" :key="titulo" class="flex items-start gap-3">
           <span class="grid size-9 shrink-0 place-items-center rounded-full bg-durazno-200 text-lg font-bold text-violeta-700">{{ i + 1 }}</span>
-          <span><span class="block font-bold text-durazno-200">{{ titulo }}</span><span class="text-sm font-semibold">{{ texto }}</span></span>
+          <span><span class="block text-xl font-bold leading-tight text-durazno-200">{{ titulo }}</span><span class="text-sm font-semibold">{{ texto }}</span></span>
         </li>
       </ol>
     </Tarjeta>

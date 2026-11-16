@@ -5,7 +5,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Symfony\Component\HttpFoundation\Response;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -26,4 +28,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Páginas de error con la marca (PLAN-07). 403/404/419/429 siempre; 500/503 solo fuera
+        // de local/testing, para no tapar el detalle del error mientras se desarrolla.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            $estado = $response->getStatusCode();
+            $siempre = in_array($estado, [403, 404, 419, 429], true);
+            $produccion = in_array($estado, [500, 503], true) && ! app()->environment(['local', 'testing']);
+
+            if ($request->is('api/*') || $request->expectsJson() || (! $siempre && ! $produccion)) {
+                return $response;
+            }
+
+            return Inertia::render('Errores/Estado', ['estado' => $estado])
+                ->toResponse($request)
+                ->setStatusCode($estado);
+        });
     })->create();

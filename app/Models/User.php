@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoEvento;
 use App\Enums\Rol;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -13,13 +14,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $attributes = ['rol' => 'vecino'];
 
@@ -55,6 +57,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function eventosAgendados(): BelongsToMany
     {
         return $this->belongsToMany(Evento::class)->withTimestamps();
+    }
+
+    /** Eventos que cargó (como emprendedor o moderador). */
+    public function eventos(): HasMany
+    {
+        return $this->hasMany(Evento::class);
+    }
+
+    /**
+     * Agenda tal como la ve la persona (web y API). withTrashed: el cancelado se
+     * conserva con la etiqueta "Cancelado"; se ocultan los rechazados después de agendarlos.
+     */
+    public function agendaVisible(string $vista = 'proximos'): BelongsToMany
+    {
+        $eventos = $this->eventosAgendados()
+            ->withTrashed()
+            ->where(fn ($query) => $query->whereNotNull('eventos.deleted_at')->orWhere('estado', '!=', EstadoEvento::Rechazado));
+
+        return $vista === 'pasados'
+            ? $eventos->whereRaw('COALESCE(eventos.fin, eventos.inicio) < ?', [now()])->orderByDesc('inicio')
+            : $eventos->vigentes()->orderBy('inicio');
     }
 
     // barrio_propio_id queda fuera de Fillable: solo lo cambia MiBarrioController.

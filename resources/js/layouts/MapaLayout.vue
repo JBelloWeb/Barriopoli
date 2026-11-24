@@ -19,7 +19,6 @@ const CABA_BBOX = [-58.5315, -34.7053, -58.3352, -34.5265]
 const MARGEN_CIUDAD = { top: 16, bottom: 150, left: 16, right: 16 }
 // En pantallas bajas (celu en horizontal) la reserva fija dejaba ~150 px para toda CABA.
 const margenCiudad = (alto = typeof window === 'undefined' ? 900 : window.innerHeight) => ({ ...MARGEN_CIUDAD, bottom: Math.min(MARGEN_CIUDAD.bottom, Math.round(alto * 0.22)) })
-const MARGEN_BARRIO = { top: 40, bottom: 210, left: 30, right: 30 }
 const VISTA_CIUDAD = { bounds: CABA_BBOX, fitBoundsOptions: { padding: margenCiudad() }, pitch: 0, bearing: 0 }
 const MARGEN_BOUNDS = 0.015
 
@@ -38,17 +37,32 @@ const COLOR = {
 // corrido hacia adentro, sobre el borde del barrio, y se desliza hasta su lugar real (offset 0).
 // La distancia en metros se calcula con el zoom en el que termina la cámara (cameraForBounds):
 // así hay siempre ~CONTORNO_SEPARACION_PX entre líneas, sea Palermo o San Telmo, en celu o desktop.
-const CONTORNO_SEPARACION_PX = 11
+const CONTORNO_SEPARACION_PX = 8
+// 5 ecos, como las láminas de la marca (4 a 6 líneas): se afinan y se apagan hacia afuera.
 const CONTORNOS = [
     { ancho: 3, opacidad: 1 },
     { ancho: 2.5, opacidad: 0.8 },
     { ancho: 2, opacidad: 0.6 },
+    { ancho: 1.75, opacidad: 0.45 },
+    { ancho: 1.5, opacidad: 0.3 },
 ]
 const CONTORNO_EXPANSION_MS = 900
-const CONTORNO_ESCALON_MS = 150
+const CONTORNO_ESCALON_MS = 120
+// Lo que ocupa el eco más lejano + aire: la cámara reserva ese espacio para que ninguno quede cortado.
+// Abajo queda la tarjeta del barrio, que ya reserva más.
+const ALCANCE_ECOS_PX = CONTORNO_SEPARACION_PX * CONTORNOS.length + 8
+// En pantallas bajas (celu en horizontal) los 210 px de la tarjeta dejaban ~60 px para el barrio: como en la
+// vista ciudad, la reserva de abajo se limita a una parte del alto.
+const margenBarrio = (alto) => ({
+    top: Math.max(40, ALCANCE_ECOS_PX),
+    bottom: Math.min(210, Math.round(alto * 0.5)),
+    left: ALCANCE_ECOS_PX,
+    right: ALCANCE_ECOS_PX,
+})
 const capasContorno = CONTORNOS.map((_, i) => `barrio-contorno-${i}`)
 const fuentesContorno = CONTORNOS.map((_, i) => `contorno-${i}`)
 let vueloActual = 0 // identifica el último fitBounds a un barrio
+let cajaBarrio = null // bbox del barrio vigente, para recalcular sus límites al redimensionar
 const metrosPorPixel = (lat, zoom) => (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (512 * 2 ** zoom)
 const FUENTE_ETIQUETAS = ['Montserrat SemiBold', 'Open Sans Bold', 'Noto Sans Regular']
 
@@ -191,10 +205,40 @@ const fijarLimitesCiudad = () => {
     map.setMinZoom(camara.zoom)
     limitesCiudadActivos = true
 }
-// Al cambiar el tamaño (rotar el celu, redimensionar la ventana) cambia el encuadre de CABA.
-const alRedimensionar = () => {
-    if (limitesCiudadActivos && !barrio.value) fijarLimitesCiudad()
+// Vista barrio: los límites CONTIENEN la vista de llegada. Si no, setMaxBounds corrige la cámara en el
+// acto y se ve un salto justo cuando arrancan los ecos (antes: bbox ± MARGEN_BOUNDS fijo y minZoom 12,
+// que movían la cámara hasta 1,5 km y un nivel de zoom). Se suma el área del barrio para recorrerlo al acercarse.
+let limitesBarrioActivos = false
+let zoomLlegada = null
+const fijarLimitesBarrio = (alLlegar = false) => {
+    if (!cajaBarrio) return
+    if (alLlegar) zoomLlegada = map.getZoom()
+    const [[oeste, sur], [este, norte]] = extensionVista({ center: map.getCenter(), zoom: map.getZoom() })
+    map.setMaxBounds([
+        [Math.min(oeste, cajaBarrio[0] - MARGEN_BOUNDS), Math.min(sur, cajaBarrio[1] - MARGEN_BOUNDS)],
+        [Math.max(este, cajaBarrio[2] + MARGEN_BOUNDS), Math.max(norte, cajaBarrio[3] + MARGEN_BOUNDS)],
+    ])
+    // No alejarse más que la vista de llegada. Si al rotar la cámara queda más lejos, ese pasa a ser el mínimo:
+    // un minZoom mayor que el zoom actual también la corregiría (salto).
+    map.setMinZoom(Math.min(zoomLlegada ?? map.getZoom(), map.getZoom()))
+    limitesBarrioActivos = true
 }
+
+// Al cambiar el tamaño (rotar el celu, redimensionar la ventana) cambia lo que se ve. El resize automático de
+// MapLibre restringe la cámara con los límites VIEJOS antes de avisar (se veía un salto de +0,9 de zoom al
+// rotar en un barrio): por eso el resize es propio y los límites se liberan antes de cambiar el tamaño.
+const alRedimensionar = () => {
+    if (!map) return
+    const enBarrio = limitesBarrioActivos && barrio.value && !map.isMoving()
+    if (enBarrio) {
+        map.setMaxBounds(null)
+        map.setMinZoom(9)
+    }
+    map.resize()
+    if (limitesCiudadActivos && !barrio.value) fijarLimitesCiudad()
+    if (enBarrio) fijarLimitesBarrio()
+}
+let observadorTamano = null
 
 const mostrarCiudad = () => {
     mostrarCapasCiudad(true)
@@ -202,6 +246,8 @@ const mostrarCiudad = () => {
     // se fijan al terminar el vuelo. Mismo guard de vuelo que mostrarBarrio.
     const esteVuelo = ++vueloActual
     limitesCiudadActivos = false
+    limitesBarrioActivos = false
+    cajaBarrio = null
     map.setMaxBounds(null)
     map.setMinZoom(9)
     map.fitBounds(CABA_BBOX, { padding: margenCiudad(map.getCanvas().clientHeight), pitch: 0, bearing: 0, duration: duracion(1200) })
@@ -229,7 +275,8 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     // POSITIVO corre la línea hacia adentro del barrio, que es donde arranca la animación.
     const base = simplify(geo, { tolerance: 0.0002, highQuality: true })
     const caja = bbox(geo)
-    const camara = map.cameraForBounds(caja, { padding: MARGEN_BARRIO, pitch: 50, bearing: -10 })
+    const margen = margenBarrio(map.getCanvas().clientHeight)
+    const camara = map.cameraForBounds(caja, { padding: margen, pitch: 50, bearing: -10 })
     const metrosPx = metrosPorPixel((caja[1] + caja[3]) / 2, camara?.zoom ?? 13.5)
     const separacionesPx = CONTORNOS.map((_, i) => CONTORNO_SEPARACION_PX * (i + 1))
     CONTORNOS.forEach((contorno, i) => {
@@ -276,9 +323,11 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
     // al terminar el vuelo se vuelven a fijar alrededor del barrio nuevo.
     const esteVuelo = ++vueloActual
     limitesCiudadActivos = false
+    limitesBarrioActivos = false
+    cajaBarrio = caja
     map.setMaxBounds(null)
     map.setMinZoom(9)
-    map.fitBounds(caja, { padding: MARGEN_BARRIO, pitch: 50, bearing: -10, duration: duracion(1200) })
+    map.fitBounds(caja, { padding: margen, pitch: 50, bearing: -10, duration: duracion(1200) })
     // Un moveend puede llegar antes de tiempo (p. ej. de un movimiento anterior que fitBounds
     // interrumpe): se ignora si es de otro vuelo y, si la cámara sigue en movimiento, se espera al próximo.
     // Sin esto, la expansión se calculaba con el zoom de la ciudad y arrancaba casi sin recorrido.
@@ -288,12 +337,9 @@ const mostrarBarrio = (datosBarrio, datosEventos) => {
             map.once('moveend', alTerminarVuelo)
             return
         }
+        // Primero los límites (no mueven la cámara: contienen la vista de llegada), después los ecos.
+        fijarLimitesBarrio(true)
         expandirContornos(separacionesPx)
-        map.setMaxBounds([
-            [caja[0] - MARGEN_BOUNDS, caja[1] - MARGEN_BOUNDS],
-            [caja[2] + MARGEN_BOUNDS, caja[3] + MARGEN_BOUNDS],
-        ])
-        map.setMinZoom(12)
     }
     map.once('moveend', alTerminarVuelo)
 }
@@ -380,6 +426,7 @@ onMounted(() => {
         minZoom: 9,
         maxZoom: 18,
         canvasContextAttributes: { antialias: true },
+        trackResize: false, // ver alRedimensionar
     })
     // Solo en desarrollo: acceso al mapa desde la consola y los tests E2E. Vite lo elimina del build.
     if (import.meta.env.DEV) window.__mapa = map
@@ -389,7 +436,8 @@ onMounted(() => {
         sincronizar()
         agregarCiudad()
     })
-    map.on('resize', alRedimensionar)
+    observadorTamano = new ResizeObserver(alRedimensionar)
+    observadorTamano.observe(contenedor.value)
     map.on('click', alHacerClick)
     map.on('mousemove', alMoverMouse)
     map.on('mouseout', () => marcarHover(null))
@@ -404,6 +452,7 @@ watch(seleccion, aplicarFiltro)
 watch(() => [page.props.favoritosIds, page.props.barrioPropioId], repintarCiudad, { deep: true })
 
 onBeforeUnmount(() => {
+    observadorTamano?.disconnect()
     map?.remove()
     map = null
 })

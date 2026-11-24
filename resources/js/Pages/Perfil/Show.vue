@@ -8,6 +8,7 @@ import Boton from '@/components/ui/Boton.vue'
 import Icono from '@/components/ui/Icono.vue'
 import Insignia from '@/components/ui/Insignia.vue'
 import Tarjeta from '@/components/ui/Tarjeta.vue'
+import { ROLES } from '@/lib/roles'
 import { nombreLegible } from '@/lib/texto'
 
 defineOptions({ layout: AppLayout })
@@ -21,7 +22,6 @@ defineProps({
 const page = usePage()
 const auth = computed(() => page.props.auth)
 const inicial = computed(() => auth.value.user.name.trim().charAt(0).toUpperCase())
-const ROLES = { vecino: 'Vecino', emprendedor: 'Emprendedor', moderador: 'Moderación' }
 
 const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibold hover:bg-violeta-50'
 </script>

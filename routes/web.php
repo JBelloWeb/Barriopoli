@@ -12,6 +12,7 @@ use App\Http\Controllers\Moderacion\CategoriaController;
 use App\Http\Controllers\Moderacion\EventoController as ModeracionEventoController;
 use App\Http\Controllers\Moderacion\PanelController;
 use App\Http\Controllers\Moderacion\SolicitudController;
+use App\Http\Controllers\Moderacion\UsuarioController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SolicitudEmprendedorController;
 use App\Models\Barrio;
@@ -84,6 +85,10 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
 
     Route::post('/eventos/{evento}/aprobar', [ModeracionEventoController::class, 'aprobar'])->name('eventos.aprobar');
     Route::post('/eventos/{evento}/rechazar', [ModeracionEventoController::class, 'rechazar'])->name('eventos.rechazar');
+
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+    Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show'])->whereNumber('usuario')->name('usuarios.show');
+    Route::put('/usuarios/{usuario}/rol', [UsuarioController::class, 'cambiarRol'])->whereNumber('usuario')->name('usuarios.rol');
 });
 
 // Guía de estilos (PLAN-07): solo en local, para validar tokens y componentes.

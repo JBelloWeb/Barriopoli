@@ -43,8 +43,13 @@ const rechazar = (motivo) => router.post(`/moderacion/solicitudes/${rechazando.v
 
 <template>
   <div class="mx-auto max-w-3xl px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))] md:px-8">
-    <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Moderación</h1>
-    <p class="mt-0.5 font-bold text-niebla-600">Lo que espera tu revisión</p>
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Moderación</h1>
+        <p class="mt-0.5 font-bold text-niebla-600">Lo que espera tu revisión</p>
+      </div>
+      <Boton href="/moderacion/usuarios" variante="suave" icono="usuario" chico>Usuarios</Boton>
+    </div>
 
     <div class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]" role="tablist" aria-label="Secciones de moderación">
       <button

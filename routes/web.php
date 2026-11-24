@@ -1,19 +1,21 @@
 <?php
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\BarrioGeoController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
-use App\Http\Controllers\MiBarrioController;
 use App\Http\Controllers\GeocodificacionController;
+use App\Http\Controllers\MiBarrioController;
 use App\Http\Controllers\Moderacion\CategoriaController;
 use App\Http\Controllers\Moderacion\EventoController as ModeracionEventoController;
 use App\Http\Controllers\Moderacion\PanelController;
 use App\Http\Controllers\Moderacion\SolicitudController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SolicitudEmprendedorController;
+use App\Models\Barrio;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 // Con "Mi barrio" marcado, la app abre directo en él.
 Route::get('/', function (Request $request) {
@@ -25,7 +27,7 @@ Route::get('/', function (Request $request) {
 // no se lo desloguea (un GET que cierra sesión es vulnerable a CSRF): se lo lleva a donde está "Salir".
 Route::get('/logout', fn (Request $request) => $request->user() ? to_route('perfil') : to_route('barrios.index'))
     ->name('logout.get');
-Route::get('/barrios', [BarrioController::class, 'index']) ->name('barrios.index');
+Route::get('/barrios', [BarrioController::class, 'index'])->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
 // Siluetas simplificadas de los 48 barrios para la vista ciudad (cacheadas).
 Route::get('/geo/barrios.json', BarrioGeoController::class)->name('geo.barrios');
@@ -36,6 +38,8 @@ Route::get('/eventos/{evento}/calendario.ics', [AgendaController::class, 'export
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil');
+    // Guarda con las rutas de Fortify: PUT /user/profile-information y PUT /user/password.
+    Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
 
     // Favoritos y Mi barrio: requieren cuenta, no email verificado (no publican nada).
     Route::put('/favoritos/{barrio:slug}', [FavoritoController::class, 'update'])->name('favoritos.update');
@@ -51,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('verified')->group(function () {
         Route::get('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'create'])->name('solicitud.create');
         Route::post('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'store'])->name('solicitud.store');
+        Route::post('/perfil/emprendimiento', [SolicitudEmprendedorController::class, 'cambiarNombre'])->name('perfil.emprendimiento');
 
         // La autorización fina (autor o moderador) la hacen EventoPolicy y EventoRequest.
         Route::get('/mis-eventos', [EventoController::class, 'misEventos'])->name('mis-eventos');
@@ -82,7 +87,7 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
 // Guía de estilos (PLAN-07): solo en local, para validar tokens y componentes.
 if (app()->isLocal()) {
     Route::get('/dev/estilos', fn () => Inertia\Inertia::render('Dev/Estilos', [
-        'barrios' => App\Models\Barrio::whereIn('slug', ['palermo', 'boca', 'villa-devoto', 'nueva-pompeya', 'villa-riachuelo', 'san-nicolas'])
+        'barrios' => Barrio::whereIn('slug', ['palermo', 'boca', 'villa-devoto', 'nueva-pompeya', 'villa-riachuelo', 'san-nicolas'])
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'slug', 'geojson']),
     ]))->name('dev.estilos');

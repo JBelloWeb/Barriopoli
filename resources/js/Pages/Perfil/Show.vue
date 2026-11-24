@@ -75,6 +75,9 @@ const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibo
       </Tarjeta>
 
       <Tarjeta as="nav" sin-padding class="divide-y divide-niebla-200 overflow-hidden" aria-label="Opciones de cuenta">
+        <Link href="/perfil/editar" :class="fila">
+          <Icono nombre="editar" class="size-5 text-violeta-500" /> Editar perfil <Icono nombre="chevron" class="ml-auto size-5 text-niebla-500" />
+        </Link>
         <Link v-if="auth.puede.publicar" href="/mis-eventos" :class="fila">
           <Icono nombre="calendario" class="size-5 text-violeta-500" /> Mis eventos <Icono nombre="chevron" class="ml-auto size-5 text-niebla-500" />
         </Link>

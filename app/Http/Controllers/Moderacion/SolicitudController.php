@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Moderacion;
 
 use App\Enums\EstadoSolicitud;
 use App\Enums\Rol;
+use App\Enums\TipoSolicitud;
 use App\Http\Controllers\Controller;
 use App\Models\SolicitudEmprendedor;
 use Illuminate\Http\RedirectResponse;
@@ -17,20 +18,24 @@ class SolicitudController extends Controller
     {
         abort_unless($solicitud->estado === EstadoSolicitud::Pendiente, 409);
 
-        DB::transaction(function () use ($request, $solicitud) {
+        $alta = $solicitud->tipo === TipoSolicitud::Alta;
+        // Un cambio de nombre solo tiene sentido si la persona sigue siendo emprendedor.
+        abort_unless($alta || $solicitud->user->rol === Rol::Emprendedor, 409);
+
+        DB::transaction(function () use ($request, $solicitud, $alta) {
             $solicitud->forceFill([
                 'estado' => EstadoSolicitud::Aprobada,
                 'revisada_por' => $request->user()->id,
                 'revisada_at' => now(),
             ])->save();
 
-            $solicitud->user->forceFill([
-                'rol' => Rol::Emprendedor,
-                'emprendimiento' => $solicitud->nombre_emprendimiento,
-            ])->save();
+            $solicitud->user->forceFill($alta
+                ? ['rol' => Rol::Emprendedor, 'emprendimiento' => $solicitud->nombre_emprendimiento]
+                : ['emprendimiento' => $solicitud->nombre_emprendimiento]
+            )->save();
         });
 
-        Inertia::flash('exito', 'Solicitud aprobada.');
+        Inertia::flash('exito', $alta ? 'Solicitud aprobada.' : 'Cambio de nombre aprobado.');
 
         return back();
     }

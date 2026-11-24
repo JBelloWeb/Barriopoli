@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\BarrioGeoController;
+use App\Http\Controllers\EmprendimientoController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\GeocodificacionController;
@@ -34,6 +35,7 @@ Route::get('/geo/barrios.json', BarrioGeoController::class)->name('geo.barrios')
 Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
 Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
 // Pública: la policy 'view' deja descargar solo publicados (o propios).
+Route::get('/emprendimientos/{emprendedor}', [EmprendimientoController::class, 'show'])->whereNumber('emprendedor')->name('emprendimientos.show');
 Route::get('/eventos/{evento}/calendario.ics', [AgendaController::class, 'exportarEvento'])->whereNumber('evento')->name('eventos.ics');
 
 Route::middleware('auth')->group(function () {

@@ -1,8 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
 import Onda from '@/components/marca/Onda.vue'
 import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
 import Boton from '@/components/ui/Boton.vue'
@@ -14,7 +13,6 @@ import { nombreLegible } from '@/lib/texto'
 defineOptions({ layout: AppLayout })
 defineProps({
   solicitud: { type: Object, default: null },
-  tokens: { type: Array, default: () => [] },
   emprendimiento: { type: String, default: null },
   miBarrio: { type: Object, default: null },
   cantidades: { type: Object, default: () => ({ favoritos: 0, agendados: 0 }) },
@@ -25,32 +23,6 @@ const auth = computed(() => page.props.auth)
 const inicial = computed(() => auth.value.user.name.trim().charAt(0).toUpperCase())
 const ROLES = { vecino: 'Vecino', emprendedor: 'Emprendedor', moderador: 'Moderación' }
 
-// El token en texto plano llega una sola vez por flash.
-const tokenNuevo = computed(() => page.flash?.token ?? null)
-const copiado = ref(false)
-const form = useForm({ nombre: '' })
-
-function crearToken() {
-  copiado.value = false
-  form.post('/perfil/tokens', { preserveScroll: true, onSuccess: () => form.reset() })
-}
-
-async function copiar() {
-  try {
-    await navigator.clipboard.writeText(tokenNuevo.value)
-    copiado.value = true
-  } catch {
-    copiado.value = false
-  }
-}
-
-function revocar(token) {
-  if (confirm(`¿Revocar "${token.nombre}"? Lo que lo use deja de funcionar.`)) {
-    router.delete(`/perfil/tokens/${token.id}`, { preserveScroll: true })
-  }
-}
-
-const fecha = (iso) => new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
 const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibold hover:bg-violeta-50'
 </script>
 
@@ -120,34 +92,10 @@ const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibo
       <Tarjeta v-if="auth.puede.publicar" as="section" aria-labelledby="titulo-api">
         <h2 id="titulo-api" class="flex items-center gap-2 text-lg font-bold"><Icono nombre="llave" class="size-5 text-violeta-500" /> Acceso a la API</h2>
         <p class="mt-1 text-sm text-niebla-600">
-          Conectá tu sitio o sistema para publicar eventos sin entrar a la app. Cada token vence a los 90 días.
+          Podés cargar y editar eventos desde tu sitio o sistema con la API, usando tu email y contraseña (HTTP Basic).
+          Los eventos nuevos pasan por moderación, igual que desde la app.
         </p>
-
-        <div v-if="tokenNuevo" class="marco-marca mt-4 bg-durazno-50 p-4" role="status">
-          <p class="font-bold">Copialo ahora: no se vuelve a mostrar.</p>
-          <code class="mt-2 block break-all rounded-xl bg-white p-3 font-mono text-sm">{{ tokenNuevo }}</code>
-          <Boton variante="secundario" :icono="copiado ? 'check' : 'copiar'" bloque class="mt-3" @click="copiar">
-            {{ copiado ? 'Copiado' : 'Copiar token' }}
-          </Boton>
-        </div>
-
-        <form class="mt-4 space-y-3" @submit.prevent="crearToken">
-          <CampoTexto v-model="form.nombre" etiqueta="Nombre (p. ej. Mi sitio web)" required maxlength="60" :error="form.errors.nombre" />
-          <Boton tipo="submit" bloque :cargando="form.processing">Crear token</Boton>
-        </form>
-
-        <ul v-if="tokens.length" class="mt-4 divide-y divide-niebla-200">
-          <li v-for="token in tokens" :key="token.id" class="flex items-center gap-3 py-3">
-            <div class="min-w-0 flex-1">
-              <p class="truncate font-bold">{{ token.nombre }}</p>
-              <p class="text-sm text-niebla-600">
-                {{ token.ultimo_uso ? `Usado el ${fecha(token.ultimo_uso)}` : 'Sin usar' }}
-                <template v-if="token.expira"> · vence el {{ fecha(token.expira) }}</template>
-              </p>
-            </div>
-            <Boton variante="fantasma" chico class="text-error!" @click="revocar(token)">Revocar</Boton>
-          </li>
-        </ul>
+        <code class="mt-3 block break-all rounded-xl bg-niebla-100 p-3 font-mono text-sm">POST /api/v1/eventos</code>
       </Tarjeta>
 
       <div class="text-center">

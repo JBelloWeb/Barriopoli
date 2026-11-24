@@ -7,11 +7,9 @@ use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\User;
 use App\Notifications\CambioEnEvento;
-use App\Support\AbilitiesApi;
 use Database\Seeders\BarrioSeeder;
 use Database\Seeders\CategoriaSeeder;
 use Illuminate\Support\Facades\Notification;
-use Laravel\Sanctum\Sanctum;
 
 function apiUsuario(Rol $rol, array $extra = []): User
 {
@@ -52,59 +50,30 @@ beforeEach(function () {
     ];
 });
 
-// --- Tokens ---
-
-it('emite un token con abilities según el rol', function () {
-    $this->postJson('/api/v1/tokens', [
-        'email' => $this->emprendedor->email, 'password' => 'password', 'dispositivo' => 'postman',
-    ])->assertCreated()
-        ->assertJsonPath('abilities', [AbilitiesApi::AGENDA, AbilitiesApi::EVENTOS_ESCRIBIR])
-        ->assertJsonPath('usuario.emprendimiento', 'Taller Ñandú')
-        ->assertJsonStructure(['token', 'expira']);
-
-    $this->postJson('/api/v1/tokens', [
-        'email' => $this->vecino->email, 'password' => 'password', 'dispositivo' => 'postman',
-    ])->assertCreated()->assertJsonPath('abilities', [AbilitiesApi::AGENDA]);
-});
+// --- Autenticación (HTTP Basic) ---
 
 it('rechaza credenciales inválidas y frena la fuerza bruta', function () {
-    $credenciales = ['email' => $this->vecino->email, 'password' => 'mala', 'dispositivo' => 'x'];
-
-    foreach (range(1, 5) as $intento) {
-        $this->postJson('/api/v1/tokens', $credenciales)->assertUnprocessable()->assertJsonValidationErrors('email');
+    foreach (range(1, 10) as $intento) {
+        $this->withBasicAuth($this->emprendedor->email, 'mala')->getJson('/api/v1/mis-eventos')
+            ->assertUnauthorized()
+            ->assertHeader('WWW-Authenticate');
     }
 
-    $this->postJson('/api/v1/tokens', $credenciales)->assertTooManyRequests();
-});
-
-it('reloguearse desde el mismo dispositivo reemplaza el token', function () {
-    $credenciales = ['email' => $this->vecino->email, 'password' => 'password', 'dispositivo' => 'celu'];
-    $this->postJson('/api/v1/tokens', $credenciales);
-    $this->postJson('/api/v1/tokens', $credenciales);
-
-    expect($this->vecino->tokens()->count())->toBe(1);
-});
-
-it('revoca el token actual', function () {
-    $token = $this->vecino->createToken('celu', AbilitiesApi::para($this->vecino))->plainTextToken;
-
-    $this->withToken($token)->getJson('/api/v1/yo')->assertOk()
-        ->assertJsonPath('data.rol', 'vecino')
-        ->assertJsonPath('abilities', [AbilitiesApi::AGENDA]);
-    $this->withToken($token)->deleteJson('/api/v1/tokens/actual')->assertNoContent();
-
-    $this->app['auth']->forgetGuards();
-    $this->withToken($token)->getJson('/api/v1/yo')->assertUnauthorized();
-});
-
-it('no acepta un token vencido', function () {
-    $token = $this->vecino->createToken('celu', ['agenda'], now()->subMinute())->plainTextToken;
-
-    $this->withToken($token)->getJson('/api/v1/yo')->assertUnauthorized();
+    $this->withBasicAuth($this->emprendedor->email, 'mala')->getJson('/api/v1/mis-eventos')->assertTooManyRequests();
 });
 
 it('la API no se autentica con la sesión web', function () {
-    $this->actingAs($this->emprendedor)->getJson('/api/v1/yo')->assertUnauthorized();
+    $this->actingAs($this->emprendedor);
+    $this->app['auth']->forgetGuards();
+
+    $this->getJson('/api/v1/mis-eventos')->assertUnauthorized();
+    $this->postJson('/api/v1/eventos', $this->datos)->assertUnauthorized();
+});
+
+it('no inicia sesión: cada request trae sus credenciales', function () {
+    $this->withBasicAuth($this->emprendedor->email, 'password')->getJson('/api/v1/mis-eventos')
+        ->assertOk()
+        ->assertCookieMissing(config('session.cookie'));
 });
 
 // --- Lectura pública ---
@@ -161,15 +130,16 @@ it('filtra eventos por barrio, categoría, fechas y emprendimiento', function ()
     $this->getJson('/api/v1/eventos?barrio=atlantida')->assertUnprocessable();
 });
 
-it('oculta pendientes ajenos y los muestra a su autor con token', function () {
-    $pendiente = apiEvento($this->emprendedor, EstadoEvento::Rechazado, ['motivo_rechazo' => 'Falta la imagen']);
+it('oculta los no publicados en el detalle público y los muestra al autor en mis eventos', function () {
+    $rechazado = apiEvento($this->emprendedor, EstadoEvento::Rechazado, ['motivo_rechazo' => 'Falta la imagen']);
 
-    $this->getJson("/api/v1/eventos/{$pendiente->id}")->assertNotFound();
+    $this->getJson("/api/v1/eventos/{$rechazado->id}")->assertNotFound();
+    $this->withBasicAuth($this->emprendedor->email, 'password')->getJson("/api/v1/eventos/{$rechazado->id}")->assertNotFound();
 
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
-    $this->getJson("/api/v1/eventos/{$pendiente->id}")->assertOk()
-        ->assertJsonPath('data.motivo_rechazo', 'Falta la imagen')
-        ->assertJsonPath('data.editable', true);
+    $this->withBasicAuth($this->emprendedor->email, 'password')->getJson('/api/v1/mis-eventos')->assertOk()
+        ->assertJsonPath('data.0.id', $rechazado->id)
+        ->assertJsonPath('data.0.motivo_rechazo', 'Falta la imagen')
+        ->assertJsonPath('data.0.editable', true);
 });
 
 it('expone emprendimientos sin datos personales', function () {
@@ -193,7 +163,7 @@ it('expone emprendimientos sin datos personales', function () {
 // --- Escritura ---
 
 it('crea un evento pendiente con el barrio detectado', function () {
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
 
     $respuesta = $this->postJson('/api/v1/eventos', [...$this->datos, 'estado' => 'publicado'])
         ->assertCreated()
@@ -207,7 +177,7 @@ it('crea un evento pendiente con el barrio detectado', function () {
 });
 
 it('valida el punto y las fechas con los mismos mensajes que la web', function () {
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
 
     $this->postJson('/api/v1/eventos', [...$this->datos, 'latitud' => -34.4, 'longitud' => -58.9])
         ->assertUnprocessable()
@@ -216,23 +186,22 @@ it('valida el punto y las fechas con los mismos mensajes que la web', function (
         ->assertUnprocessable()->assertJsonValidationErrors('inicio');
 });
 
-it('exige la ability y el rol para escribir', function () {
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::AGENDA]);
-    $this->postJson('/api/v1/eventos', $this->datos)->assertForbidden();
+it('exige credenciales y un rol que pueda publicar', function () {
+    $this->postJson('/api/v1/eventos', $this->datos)->assertUnauthorized();
 
-    // Un token viejo con la ability no alcanza si el rol ya no lo permite: decide la policy.
-    Sanctum::actingAs($this->vecino, [AbilitiesApi::EVENTOS_ESCRIBIR]);
-    $this->postJson('/api/v1/eventos', $this->datos)->assertForbidden();
+    // Sin abilities, decide EventoPolicy: un vecino con credenciales válidas no publica.
+    $this->withBasicAuth($this->vecino->email, 'password')->postJson('/api/v1/eventos', $this->datos)->assertForbidden();
 
-    $this->app['auth']->forgetGuards();
-    $this->withHeader('Authorization', '')->postJson('/api/v1/eventos', $this->datos)->assertUnauthorized();
+    // Tampoco un emprendedor sin email verificado.
+    $sinVerificar = apiUsuario(Rol::Emprendedor, ['emprendimiento' => 'Nuevo', 'email_verified_at' => null]);
+    $this->withBasicAuth($sinVerificar->email, 'password')->postJson('/api/v1/eventos', $this->datos)->assertForbidden();
 });
 
 it('editar el título vuelve a revisión y editar el horario avisa a quien lo agendó', function () {
     Notification::fake();
     $evento = apiEvento($this->emprendedor, EstadoEvento::Publicado);
     $this->vecino->eventosAgendados()->attach($evento);
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
 
     $nuevoInicio = now()->addWeeks(2)->startOfHour()->toIso8601String();
     $this->putJson("/api/v1/eventos/{$evento->id}", [...$this->datos, 'inicio' => $nuevoInicio])
@@ -245,7 +214,7 @@ it('editar el título vuelve a revisión y editar el horario avisa a quien lo ag
 
 it('no deja editar ni borrar eventos ajenos', function () {
     $ajeno = apiEvento(apiUsuario(Rol::Emprendedor), EstadoEvento::Publicado);
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
 
     $this->putJson("/api/v1/eventos/{$ajeno->id}", $this->datos)->assertForbidden();
     $this->deleteJson("/api/v1/eventos/{$ajeno->id}")->assertForbidden();
@@ -255,54 +224,17 @@ it('la baja es lógica y el evento queda cancelado en la agenda', function () {
     $evento = apiEvento($this->emprendedor, EstadoEvento::Publicado);
     $this->vecino->eventosAgendados()->attach($evento);
 
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
     $this->deleteJson("/api/v1/eventos/{$evento->id}")->assertNoContent();
-    expect(Evento::withTrashed()->find($evento->id)->trashed())->toBeTrue();
-
-    Sanctum::actingAs($this->vecino, [AbilitiesApi::AGENDA]);
-    $this->getJson('/api/v1/agenda')->assertOk()->assertJsonPath('data.0.cancelado', true);
+    expect(Evento::withTrashed()->find($evento->id)->trashed())->toBeTrue()
+        ->and($this->vecino->agendaVisible()->first()->trashed())->toBeTrue();
 });
 
 it('mis eventos lista todos los estados del autor', function () {
     apiEvento($this->emprendedor, EstadoEvento::Pendiente);
     apiEvento($this->emprendedor, EstadoEvento::Rechazado);
     apiEvento(apiUsuario(Rol::Emprendedor), EstadoEvento::Publicado);
-    Sanctum::actingAs($this->emprendedor, [AbilitiesApi::EVENTOS_ESCRIBIR]);
+    $this->withBasicAuth($this->emprendedor->email, 'password');
 
     $this->getJson('/api/v1/mis-eventos')->assertOk()->assertJsonCount(2, 'data');
-});
-
-// --- Agenda y avisos ---
-
-it('agenda publicados, no pendientes, y quita cancelados', function () {
-    $publicado = apiEvento($this->emprendedor, EstadoEvento::Publicado);
-    $pendiente = apiEvento($this->emprendedor, EstadoEvento::Pendiente);
-    Sanctum::actingAs($this->vecino, [AbilitiesApi::AGENDA]);
-
-    $this->putJson("/api/v1/agenda/{$publicado->id}")->assertNoContent();
-    $this->putJson("/api/v1/agenda/{$publicado->id}")->assertNoContent();
-    $this->putJson("/api/v1/agenda/{$pendiente->id}")->assertForbidden();
-    expect($this->vecino->eventosAgendados()->count())->toBe(1);
-
-    $publicado->delete();
-    $this->deleteJson("/api/v1/agenda/{$publicado->id}")->assertNoContent();
-    expect($this->vecino->eventosAgendados()->withTrashed()->count())->toBe(0);
-});
-
-it('la agenda exige la ability agenda', function () {
-    Sanctum::actingAs($this->vecino, []);
-
-    $this->getJson('/api/v1/agenda')->assertForbidden();
-});
-
-it('lee avisos sin marcarlos y los marca a pedido', function () {
-    $evento = apiEvento($this->emprendedor, EstadoEvento::Publicado);
-    $this->vecino->notify(new CambioEnEvento($evento, CambioEnEvento::HORARIO));
-    Sanctum::actingAs($this->vecino, [AbilitiesApi::AGENDA]);
-
-    $this->getJson('/api/v1/avisos')->assertOk()->assertJsonCount(1, 'data');
-    $this->getJson('/api/v1/avisos')->assertJsonCount(1, 'data');
-
-    $this->postJson('/api/v1/avisos/leidos')->assertNoContent();
-    $this->getJson('/api/v1/avisos')->assertJsonCount(0, 'data');
 });

@@ -2,7 +2,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AgendaController;
-use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\BarrioController;
 use App\Http\Controllers\BarrioGeoController;
 use App\Http\Controllers\EventoController;
@@ -52,10 +51,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('verified')->group(function () {
         Route::get('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'create'])->name('solicitud.create');
         Route::post('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'store'])->name('solicitud.store');
-
-        // Tokens de la API /api/v1 (ApiTokenController exige puedePublicar).
-        Route::post('/perfil/tokens', [ApiTokenController::class, 'store'])->middleware('throttle:10,1')->name('perfil.tokens.store');
-        Route::delete('/perfil/tokens/{token}', [ApiTokenController::class, 'destroy'])->whereNumber('token')->name('perfil.tokens.destroy');
 
         // La autorización fina (autor o moderador) la hacen EventoPolicy y EventoRequest.
         Route::get('/mis-eventos', [EventoController::class, 'misEventos'])->name('mis-eventos');

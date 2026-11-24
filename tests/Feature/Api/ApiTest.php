@@ -13,10 +13,7 @@ use Illuminate\Support\Facades\Notification;
 
 function apiUsuario(Rol $rol, array $extra = []): User
 {
-    $usuario = User::factory()->create();
-    $usuario->forceFill(['rol' => $rol, ...$extra])->save();
-
-    return $usuario;
+    return User::factory()->conRol($rol, $extra)->create();
 }
 
 function apiEvento(User $autor, EstadoEvento $estado, array $extra = []): Evento

@@ -1,18 +1,9 @@
 <?php
 
-use App\Enums\Rol;
 use App\Models\Barrio;
 use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\User;
-
-function moderadorCategorias(): User
-{
-    $moderador = User::factory()->create();
-    $moderador->forceFill(['rol' => Rol::Moderador])->save();
-
-    return $moderador;
-}
 
 function barrioDePrueba(): Barrio
 {
@@ -32,7 +23,7 @@ function categoria(array $datos = []): Categoria
 }
 
 it('crea una categoría con slug', function () {
-    $this->actingAs(moderadorCategorias())
+    $this->actingAs(User::factory()->moderador()->create())
         ->post('/moderacion/categorias', ['nombre' => 'Feria Barrial', 'color' => '#15803d', 'icono' => '🛍️', 'activa' => true, 'orden' => 0])
         ->assertRedirect();
 
@@ -42,7 +33,7 @@ it('crea una categoría con slug', function () {
 it('rechaza un nombre equivalente a uno existente', function (string $nombre) {
     categoria();
 
-    $this->actingAs(moderadorCategorias())
+    $this->actingAs(User::factory()->moderador()->create())
         ->post('/moderacion/categorias', ['nombre' => $nombre, 'color' => '#000000'])
         ->assertSessionHasErrors('nombre');
 
@@ -50,7 +41,7 @@ it('rechaza un nombre equivalente a uno existente', function (string $nombre) {
 })->with(['Música', 'MÚSICA', 'Musica', 'música!']);
 
 it('valida el formato del color', function () {
-    $this->actingAs(moderadorCategorias())
+    $this->actingAs(User::factory()->moderador()->create())
         ->post('/moderacion/categorias', ['nombre' => 'Cine', 'color' => 'red'])
         ->assertSessionHasErrors('color');
 });
@@ -68,7 +59,7 @@ it('no borra una categoría con eventos', function () {
         'titulo' => 'Recital', 'direccion' => 'Calle 1', 'inicio' => now()->addDay(),
     ]);
 
-    $this->actingAs(moderadorCategorias())
+    $this->actingAs(User::factory()->moderador()->create())
         ->delete("/moderacion/categorias/{$categoria->id}")
         ->assertRedirect();
 
@@ -78,7 +69,7 @@ it('no borra una categoría con eventos', function () {
 it('borra una categoría sin eventos', function () {
     $categoria = categoria();
 
-    $this->actingAs(moderadorCategorias())->delete("/moderacion/categorias/{$categoria->id}")->assertRedirect();
+    $this->actingAs(User::factory()->moderador()->create())->delete("/moderacion/categorias/{$categoria->id}")->assertRedirect();
 
     expect(Categoria::find($categoria->id))->toBeNull();
 });

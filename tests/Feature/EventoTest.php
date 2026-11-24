@@ -13,10 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 function usuarioConRol(Rol $rol): User
 {
-    $usuario = User::factory()->create();
-    $usuario->forceFill(['rol' => $rol])->save();
-
-    return $usuario;
+    return User::factory()->conRol($rol)->create();
 }
 
 beforeEach(function () {

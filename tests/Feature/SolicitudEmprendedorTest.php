@@ -5,14 +5,6 @@ use App\Enums\Rol;
 use App\Models\SolicitudEmprendedor;
 use App\Models\User;
 
-function moderador(): User
-{
-    $moderador = User::factory()->create();
-    $moderador->forceFill(['rol' => Rol::Moderador])->save();
-
-    return $moderador;
-}
-
 function solicitudPendiente(?User $vecino = null): SolicitudEmprendedor
 {
     $vecino ??= User::factory()->create();
@@ -66,7 +58,7 @@ it('bloquea el panel de moderación a un vecino', function () {
 it('aprueba una solicitud y cambia el rol', function () {
     $solicitud = solicitudPendiente();
 
-    $this->actingAs(moderador())
+    $this->actingAs(User::factory()->moderador()->create())
         ->post("/moderacion/solicitudes/{$solicitud->id}/aprobar")
         ->assertRedirect();
 
@@ -79,7 +71,7 @@ it('aprueba una solicitud y cambia el rol', function () {
 
 it('no procesa dos veces la misma solicitud', function () {
     $solicitud = solicitudPendiente();
-    $moderador = moderador();
+    $moderador = User::factory()->moderador()->create();
 
     $this->actingAs($moderador)->post("/moderacion/solicitudes/{$solicitud->id}/aprobar");
     $this->actingAs($moderador)->post("/moderacion/solicitudes/{$solicitud->id}/rechazar", ['motivo' => 'tarde'])
@@ -89,7 +81,7 @@ it('no procesa dos veces la misma solicitud', function () {
 it('rechaza una solicitud con motivo y mantiene el rol', function () {
     $solicitud = solicitudPendiente();
 
-    $this->actingAs(moderador())
+    $this->actingAs(User::factory()->moderador()->create())
         ->post("/moderacion/solicitudes/{$solicitud->id}/rechazar", ['motivo' => 'Falta información'])
         ->assertRedirect();
 

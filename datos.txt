@@ -1,0 +1,20 @@
+Barriopoli — Proyecto Final
+Tecnicatura en Diseño y Programación Web
+Autor: Juan Ignacio Peralta Bello (BelloDev)
+Repositorio: https://github.com/JBelloWeb/Barriopoli
+
+URL local: http://barriopoli.test (Laragon) o http://127.0.0.1:8000 (php artisan serve)
+
+Usuarios de demo (contraseña de todos: password)
+--------------------------------------------------
+Moderación     moderador@barriopoli.test
+Emprendedor    teatro@demo.barriopoli.test   (Teatro del Pasaje)
+Emprendedor    feria@demo.barriopoli.test    (Feria Jacarandá)
+Vecina         vecina@demo.barriopoli.test   (Mi barrio: Palermo, con agenda y favoritos)
+Vecino         test@example.com
+
+Los cinco vienen en database/barriopoli.sql. Con "php artisan migrate --seed" el moderador sale de
+MODERADOR_EMAIL y MODERADOR_PASSWORD del .env, y los de demo de "php artisan db:seed --class=DemoSeeder".
+
+API REST: /api/v1 (lectura pública; carga de eventos con HTTP Basic, email y contraseña).
+Ejemplos en docs/api-v1.http. Ejemplo: curl -u feria@demo.barriopoli.test:password http://barriopoli.test/api/v1/mis-eventos

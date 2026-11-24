@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Eventos\CancelarEvento;
 use App\Actions\Eventos\GuardarEvento;
+use App\Enums\EstadoEvento;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\EventoController as WebEventoController;
 use App\Http\Requests\EventoRequest;
@@ -51,8 +52,8 @@ class EventoController extends Controller
 
     public function show(Evento $evento): EventoResource
     {
-        // Ruta pública: el token es opcional. 404 y no 403 para no revelar pendientes ajenos.
-        abort_unless(Gate::forUser(auth('sanctum')->user())->allows('view', $evento), 404);
+        // Ruta pública: solo publicados. 404 y no 403 para no revelar pendientes; el autor los ve en /mis-eventos.
+        abort_unless($evento->estado === EstadoEvento::Publicado, 404);
 
         return EventoResource::make($evento->load(WebEventoController::RELACIONES));
     }

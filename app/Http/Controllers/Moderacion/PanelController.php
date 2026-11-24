@@ -18,7 +18,7 @@ class PanelController extends Controller
     public function index(): Response
     {
         return Inertia::render('Moderacion/Index', [
-            'solicitudes' => SolicitudEmprendedor::with('user:id,name,email')
+            'solicitudes' => SolicitudEmprendedor::with('user:id,name,email,emprendimiento')
                 ->where('estado', EstadoSolicitud::Pendiente)
                 ->oldest()
                 ->get(),

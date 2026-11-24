@@ -1,25 +1,16 @@
 # Barriopoli — API REST v1
 # Cliente: REST Client (VS Code) o HTTP Client de PhpStorm.
-# Lectura pública. Escritura: Bearer token (POST /tokens o Perfil → "Acceso a la API").
-# Errores siempre en JSON: 401 sin token, 403 sin permiso/ability, 404, 422 { message, errors }, 429.
+# Lectura pública. Escritura de eventos: HTTP Basic con el email y la contraseña de la cuenta
+# (emprendedor o moderador con email verificado). Sin sesión: cada request manda sus credenciales.
+# En producción, solo por HTTPS: Basic codifica la contraseña en base64, no la cifra.
+# Errores siempre en JSON: 401 sin credenciales o incorrectas, 403 sin permiso, 404, 422 { message, errors },
+# 429 (10 intentos por minuto por email + IP en las rutas con Basic).
 # Ojo en Windows: con curl mandá el cuerpo desde un archivo UTF-8 (--data-binary @archivo.json);
 # los acentos pasados inline en la consola pueden llegar mal codificados.
 
 @base = http://barriopoli.test/api/v1
-@token = {{login.response.body.token}}
-
-### Login → token (vence a los 90 días; mismo "dispositivo" reemplaza el anterior)
-# @name login
-POST {{base}}/tokens
-Accept: application/json
-Content-Type: application/json
-
-{"email": "emprendedor@barriopoli.test", "password": "password", "dispositivo": "rest-client"}
-
-### Quién soy y qué puede hacer este token
-GET {{base}}/yo
-Accept: application/json
-Authorization: Bearer {{token}}
+@email = emprendedor@barriopoli.test
+@password = password
 
 ### Barrios (sin geometría)
 GET {{base}}/barrios
@@ -52,14 +43,14 @@ Accept: application/json
 ### Mis eventos (todos los estados)
 GET {{base}}/mis-eventos
 Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Basic {{email}}:{{password}}
 
 ### Crear evento → 201, queda "pendiente" hasta que lo apruebe un moderador.
 # El barrio lo detecta el servidor desde latitud/longitud.
 # @name alta
 POST {{base}}/eventos
 Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Basic {{email}}:{{password}}
 Content-Type: application/json
 
 {
@@ -77,7 +68,7 @@ Content-Type: application/json
 # cambiar título, descripción, categoría, ubicación o imagen lo devuelve a revisión.
 PUT {{base}}/eventos/{{alta.response.body.data.id}}
 Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Basic {{email}}:{{password}}
 Content-Type: application/json
 
 {
@@ -94,7 +85,7 @@ Content-Type: application/json
 ### Editar con imagen: POST multipart + _method=PUT (PHP no parsea multipart en PUT)
 POST {{base}}/eventos/{{alta.response.body.data.id}}
 Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Basic {{email}}:{{password}}
 Content-Type: multipart/form-data; boundary=limite
 
 --limite
@@ -135,34 +126,4 @@ Content-Type: image/jpeg
 ### Cancelar (baja lógica) → 204. Quien lo agendó lo ve como "cancelado".
 DELETE {{base}}/eventos/{{alta.response.body.data.id}}
 Accept: application/json
-Authorization: Bearer {{token}}
-
-### Agenda (vista=proximos|pasados)
-GET {{base}}/agenda?vista=proximos
-Accept: application/json
-Authorization: Bearer {{token}}
-
-### Agendar un evento publicado → 204
-PUT {{base}}/agenda/1
-Accept: application/json
-Authorization: Bearer {{token}}
-
-### Quitar de la agenda → 204
-DELETE {{base}}/agenda/1
-Accept: application/json
-Authorization: Bearer {{token}}
-
-### Avisos sin leer (cambio de horario / cancelación). Leerlos no los marca.
-GET {{base}}/avisos
-Accept: application/json
-Authorization: Bearer {{token}}
-
-### Marcar avisos como leídos → 204
-POST {{base}}/avisos/leidos
-Accept: application/json
-Authorization: Bearer {{token}}
-
-### Cerrar sesión: revoca el token actual → 204
-DELETE {{base}}/tokens/actual
-Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Basic {{email}}:{{password}}

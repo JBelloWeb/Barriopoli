@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Rol;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +42,25 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Rol (y campos protegidos) después de crear: `rol` y `emprendimiento` no son fillable.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    public function conRol(Rol $rol, array $extra = []): static
+    {
+        return $this->afterCreating(fn (User $user) => $user->forceFill(['rol' => $rol, ...$extra])->save());
+    }
+
+    public function moderador(): static
+    {
+        return $this->conRol(Rol::Moderador);
+    }
+
+    public function emprendedor(string $emprendimiento = 'Feria del Parque'): static
+    {
+        return $this->conRol(Rol::Emprendedor, ['emprendimiento' => $emprendimiento]);
     }
 }

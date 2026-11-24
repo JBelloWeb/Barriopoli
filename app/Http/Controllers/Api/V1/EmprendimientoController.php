@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\Rol;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\EventoController as WebEventoController;
 use App\Http\Resources\EmprendimientoResource;
@@ -40,8 +39,7 @@ class EmprendimientoController extends Controller
     /** Solo emprendedores aprobados con nombre público; cuenta sus eventos próximos. */
     private function emprendimientos(): Builder
     {
-        return User::where('rol', Rol::Emprendedor)
-            ->whereNotNull('emprendimiento')
+        return User::emprendimientosPublicos()
             ->withCount(['eventos' => fn (Builder $query) => $query->publicados()->vigentes()]);
     }
 }

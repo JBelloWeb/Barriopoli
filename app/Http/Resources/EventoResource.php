@@ -16,8 +16,8 @@ class EventoResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // En rutas públicas de la API no corre auth:sanctum: el token (si vino) se resuelve acá.
-        $usuario = $request->user() ?? auth('sanctum')->user();
+        // En la API, el usuario solo existe en las rutas con HTTP Basic (mis-eventos y escritura).
+        $usuario = $request->user();
         $editable = (bool) $usuario?->can('update', $this->resource);
 
         return [

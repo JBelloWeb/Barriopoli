@@ -29,10 +29,10 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(50)->by('global'),
         ]);
 
-        // API /api/v1: por token si lo hay (también en rutas públicas), si no por IP.
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)
-            ->by(auth('sanctum')->id() ?: $request->ip()));
-        RateLimiter::for('api-login', fn (Request $request) => Limit::perMinute(5)
-            ->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
+        // API /api/v1: 60/min por IP.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+        // Escritura con HTTP Basic: corre antes de autenticar, así también frena contraseñas probadas a ciegas.
+        RateLimiter::for('api-basic', fn (Request $request) => Limit::perMinute(10)
+            ->by(Str::lower((string) $request->getUser()).'|'.$request->ip()));
     }
 }

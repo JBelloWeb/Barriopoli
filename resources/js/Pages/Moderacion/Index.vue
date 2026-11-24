@@ -43,8 +43,13 @@ const rechazar = (motivo) => router.post(`/moderacion/solicitudes/${rechazando.v
 
 <template>
   <div class="mx-auto max-w-3xl px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))] md:px-8">
-    <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Moderación</h1>
-    <p class="mt-0.5 font-bold text-niebla-600">Lo que espera tu revisión</p>
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Moderación</h1>
+        <p class="mt-0.5 font-bold text-niebla-600">Lo que espera tu revisión</p>
+      </div>
+      <Boton href="/moderacion/usuarios" variante="suave" icono="usuario" chico>Usuarios</Boton>
+    </div>
 
     <div class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]" role="tablist" aria-label="Secciones de moderación">
       <button
@@ -65,10 +70,13 @@ const rechazar = (motivo) => router.post(`/moderacion/solicitudes/${rechazando.v
     <template v-if="pestana === 'solicitudes'">
       <ul v-if="solicitudes.length" class="mt-5 space-y-3">
         <Tarjeta v-for="s in solicitudes" :key="s.id" as="li">
-          <Insignia>Quiere ser emprendedor</Insignia>
+          <Insignia>{{ s.tipo === 'cambio_nombre' ? 'Cambio de nombre' : 'Quiere ser emprendedor' }}</Insignia>
+          <p v-if="s.tipo === 'cambio_nombre'" class="mt-2 text-sm font-semibold text-niebla-600">
+            Actual: {{ s.user.emprendimiento }} <span aria-hidden="true">→</span><span class="sr-only">. Propuesto:</span>
+          </p>
           <h2 class="mt-2 text-xl font-bold leading-tight">{{ s.nombre_emprendimiento }}</h2>
           <p class="text-sm text-niebla-600">{{ s.user.name }} · {{ s.user.email }}</p>
-          <p class="mt-3 whitespace-pre-line leading-relaxed">{{ s.descripcion }}</p>
+          <p v-if="s.descripcion" class="mt-3 whitespace-pre-line leading-relaxed">{{ s.descripcion }}</p>
           <a v-if="s.enlace" :href="s.enlace" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block break-all font-semibold text-violeta-700 underline underline-offset-4">{{ s.enlace }}</a>
           <div class="mt-4 flex gap-2">
             <Boton class="flex-1" icono="check" @click="aprobar(s.id)">Aprobar</Boton>

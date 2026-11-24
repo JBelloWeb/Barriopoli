@@ -5,6 +5,8 @@ return [
     'email' => 'Ingresá un email válido.',
     'unique' => 'Ese valor ya está registrado.',
     'confirmed' => 'La confirmación no coincide.',
+    'current_password' => 'La contraseña actual no coincide.',
+    'not_in' => 'La opción elegida no es válida.',
     'string' => 'El valor no es válido.',
     'date' => 'Ingresá una fecha válida.',
     'after' => 'La fecha tiene que ser posterior.',

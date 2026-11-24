@@ -1,6 +1,7 @@
 <script setup>
 // Vue escapa todo el contenido: reemplaza al popup con setHTML (XSS).
 import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import AgendaBoton from '@/components/AgendaBoton.vue'
 import Boton from '@/components/ui/Boton.vue'
 import Icono from '@/components/ui/Icono.vue'
@@ -36,7 +37,10 @@ const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
     </p>
     <p v-if="evento.organizador" class="mt-2 flex items-center gap-2 text-sm text-niebla-600">
       <Icono nombre="tienda" class="size-5 text-violeta-500" />
-      <span>Organiza <span class="font-bold text-tinta">{{ evento.organizador }}</span></span>
+      <span>Organiza
+        <Link v-if="evento.organizador_id" :href="`/emprendimientos/${evento.organizador_id}`" class="font-bold text-violeta-700 underline underline-offset-4">{{ evento.organizador }}</Link>
+        <span v-else class="font-bold text-tinta">{{ evento.organizador }}</span>
+      </span>
     </p>
 
     <p v-if="evento.descripcion" class="mt-4 whitespace-pre-line leading-relaxed">{{ evento.descripcion }}</p>

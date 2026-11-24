@@ -30,6 +30,8 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
+        ], [
+            'email.unique' => 'Ese email ya está registrado.',
         ])->validateWithBag('updateProfileInformation');
 
         if ($input['email'] !== $user->email &&

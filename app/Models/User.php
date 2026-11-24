@@ -8,20 +8,20 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $attributes = ['rol' => 'vecino'];
 
@@ -42,6 +42,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function puedePublicar(): bool
     {
         return $this->hasVerifiedEmail() && in_array($this->rol, [Rol::Emprendedor, Rol::Moderador], true);
+    }
+
+    /** Emprendedores con nombre público: los usan la API y el perfil público. */
+    public function scopeEmprendimientosPublicos(Builder $query): Builder
+    {
+        return $query->where('rol', Rol::Emprendedor)->whereNotNull('emprendimiento');
+    }
+
+    /** Búsqueda del admin de usuarios: nombre, email o emprendimiento. */
+    public function scopeBuscar(Builder $query, ?string $texto): Builder
+    {
+        return $query->when($texto, fn (Builder $q) => $q->where(fn (Builder $w) => $w
+            ->where('name', 'like', "%{$texto}%")
+            ->orWhere('email', 'like', "%{$texto}%")
+            ->orWhere('emprendimiento', 'like', "%{$texto}%")));
     }
 
     public function solicitudes(): HasMany

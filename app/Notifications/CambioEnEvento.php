@@ -5,10 +5,6 @@ namespace App\Notifications;
 use App\Models\Evento;
 use Illuminate\Notifications\Notification;
 
-/**
- * Aviso a quienes agendaron un evento. Canal database: se muestra en la agenda
- * sin worker ni proveedor; sumar email es agregar 'mail' a via().
- */
 class CambioEnEvento extends Notification
 {
     public const HORARIO = 'horario';

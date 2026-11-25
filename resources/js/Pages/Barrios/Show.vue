@@ -9,7 +9,6 @@ import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
 import Icono from '@/components/ui/Icono.vue'
 import { nombreLegible } from '@/lib/texto'
 
-// El mapa vive en MapaLayout y lee barrio/eventos de las props de la página.
 defineOptions({ layout: [AppLayout, MapaLayout] })
 
 const props = defineProps({

@@ -1,59 +1,58 @@
 <script setup>
-// Guía de estilos de Barriopoli (solo local). Muestra tokens, tipografía y recursos de marca.
-import Isotipo from '@/components/marca/Isotipo.vue'
-import Logo from '@/components/marca/Logo.vue'
-import Onda from '@/components/marca/Onda.vue'
-import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
-import { nombreLegible } from '@/lib/texto'
-import { ref } from 'vue'
-import Boton from '@/components/ui/Boton.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Esqueleto from '@/components/ui/Esqueleto.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import CampoArea from '@/components/ui/CampoArea.vue'
-import CampoSelect from '@/components/ui/CampoSelect.vue'
-import CategoriaChips from '@/components/CategoriaChips.vue'
 
-const texto = ref('Feria de diseño')
-const seleccionChips = ref([2])
-const chips = [
-  { id: 1, nombre: 'Música', color: '#c2410c', icono: '🎵' },
-  { id: 2, nombre: 'Teatro', color: '#7c3aed', icono: '🎭' },
-  { id: 3, nombre: 'Feria', color: '#15803d', icono: '🛍️' },
-]
+  import Isotipo from '@/components/marca/Isotipo.vue'
+  import Logo from '@/components/marca/Logo.vue'
+  import Onda from '@/components/marca/Onda.vue'
+  import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
+  import { nombreLegible } from '@/lib/texto'
+  import { ref } from 'vue'
+  import Boton from '@/components/ui/Boton.vue'
+  import Tarjeta from '@/components/ui/Tarjeta.vue'
+  import Insignia from '@/components/ui/Insignia.vue'
+  import EstadoVacio from '@/components/ui/EstadoVacio.vue'
+  import Esqueleto from '@/components/ui/Esqueleto.vue'
+  import CampoTexto from '@/components/CampoTexto.vue'
+  import CampoArea from '@/components/ui/CampoArea.vue'
+  import CampoSelect from '@/components/ui/CampoSelect.vue'
+  import CategoriaChips from '@/components/CategoriaChips.vue'
 
-defineProps({ barrios: { type: Array, default: () => [] } })
+  const texto = ref('Feria de diseño')
+  const seleccionChips = ref([2])
+  const chips = [
+    { id: 1, nombre: 'Música', color: '#c2410c', icono: '🎵' },
+    { id: 2, nombre: 'Teatro', color: '#7c3aed', icono: '🎭' },
+    { id: 3, nombre: 'Feria', color: '#15803d', icono: '🛍️' },
+  ]
 
-const marca = [
-  { nombre: 'Violeta', token: 'violeta-500', hex: '#8E66CC', clase: 'bg-violeta-500 text-durazno-200' },
-  { nombre: 'Lila', token: 'lila-400', hex: '#B37DFF', clase: 'bg-lila-400 text-violeta-900' },
-  { nombre: 'Durazno', token: 'durazno-200', hex: '#FFDEB6', clase: 'bg-durazno-200 text-violeta-700' },
-  { nombre: 'Blanco cálido', token: 'papel', hex: '#F6F7EE', clase: 'bg-papel text-violeta-700 ring-1 ring-niebla-200' },
-  { nombre: 'Tinta', token: 'tinta', hex: '#080713', clase: 'bg-tinta text-durazno-200' },
-]
-const escalas = {
-  violeta: ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  lila: ['100', '200', '400'],
-  durazno: ['50', '100', '200', '400'],
-  niebla: ['100', '200', '300', '500', '600'],
-}
-// Clases completas para que Tailwind las detecte (no se arman con interpolación).
-const muestras = {
-  violeta: ['bg-violeta-50', 'bg-violeta-100', 'bg-violeta-200', 'bg-violeta-300', 'bg-violeta-400', 'bg-violeta-500', 'bg-violeta-600', 'bg-violeta-700', 'bg-violeta-800', 'bg-violeta-900'],
-  lila: ['bg-lila-100', 'bg-lila-200', 'bg-lila-400'],
-  durazno: ['bg-durazno-50', 'bg-durazno-100', 'bg-durazno-200', 'bg-durazno-400'],
-  niebla: ['bg-niebla-100', 'bg-niebla-200', 'bg-niebla-300', 'bg-niebla-500', 'bg-niebla-600'],
-}
-const contraste = [
-  { texto: 'text-violeta-700', fondo: 'bg-white', ratio: '7.96', uso: 'Texto y botón primario' },
-  { texto: 'text-white', fondo: 'bg-violeta-700', ratio: '7.96', uso: 'Texto de botón' },
-  { texto: 'text-violeta-700', fondo: 'bg-durazno-200', ratio: '6.21', uso: 'Pastillas' },
-  { texto: 'text-niebla-600', fondo: 'bg-papel', ratio: '6.33', uso: 'Texto secundario' },
-  { texto: 'text-violeta-500', fondo: 'bg-papel', ratio: '3.95', uso: 'Solo ≥ 24 px / íconos' },
-  { texto: 'text-durazno-200', fondo: 'bg-violeta-500', ratio: '3.33', uso: 'Solo títulos grandes' },
-]
+  defineProps({ barrios: { type: Array, default: () => [] } })
+
+  const marca = [
+    { nombre: 'Violeta', token: 'violeta-500', hex: '#8E66CC', clase: 'bg-violeta-500 text-durazno-200' },
+    { nombre: 'Lila', token: 'lila-400', hex: '#B37DFF', clase: 'bg-lila-400 text-violeta-900' },
+    { nombre: 'Durazno', token: 'durazno-200', hex: '#FFDEB6', clase: 'bg-durazno-200 text-violeta-700' },
+    { nombre: 'Blanco cálido', token: 'papel', hex: '#F6F7EE', clase: 'bg-papel text-violeta-700 ring-1 ring-niebla-200' },
+    { nombre: 'Tinta', token: 'tinta', hex: '#080713', clase: 'bg-tinta text-durazno-200' },
+  ]
+  const escalas = {
+    violeta: ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'],
+    lila: ['100', '200', '400'],
+    durazno: ['50', '100', '200', '400'],
+    niebla: ['100', '200', '300', '500', '600'],
+  }
+  const muestras = {
+    violeta: ['bg-violeta-50', 'bg-violeta-100', 'bg-violeta-200', 'bg-violeta-300', 'bg-violeta-400', 'bg-violeta-500', 'bg-violeta-600', 'bg-violeta-700', 'bg-violeta-800', 'bg-violeta-900'],
+    lila: ['bg-lila-100', 'bg-lila-200', 'bg-lila-400'],
+    durazno: ['bg-durazno-50', 'bg-durazno-100', 'bg-durazno-200', 'bg-durazno-400'],
+    niebla: ['bg-niebla-100', 'bg-niebla-200', 'bg-niebla-300', 'bg-niebla-500', 'bg-niebla-600'],
+  }
+  const contraste = [
+    { texto: 'text-violeta-700', fondo: 'bg-white', ratio: '7.96', uso: 'Texto y botón primario' },
+    { texto: 'text-white', fondo: 'bg-violeta-700', ratio: '7.96', uso: 'Texto de botón' },
+    { texto: 'text-violeta-700', fondo: 'bg-durazno-200', ratio: '6.21', uso: 'Pastillas' },
+    { texto: 'text-niebla-600', fondo: 'bg-papel', ratio: '6.33', uso: 'Texto secundario' },
+    { texto: 'text-violeta-500', fondo: 'bg-papel', ratio: '3.95', uso: 'Solo ≥ 24 px / íconos' },
+    { texto: 'text-durazno-200', fondo: 'bg-violeta-500', ratio: '3.33', uso: 'Solo títulos grandes' },
+  ]
 </script>
 
 <template>

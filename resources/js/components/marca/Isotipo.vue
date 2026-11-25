@@ -1,10 +1,8 @@
 <script setup>
-// Isotipo Barriopoli vectorizado desde el PNG del manual (potrace, 3 capas de color).
-// "color": los tres tonos de marca. "mono": todo en currentColor (firma, favicon, sobre fotos).
-defineProps({
-  variante: { type: String, default: 'color', validator: (v) => ['color', 'mono'].includes(v) },
-  titulo: { type: String, default: '' },
-})
+    defineProps({
+      variante: { type: String, default: 'color', validator: (v) => ['color', 'mono'].includes(v) },
+      titulo: { type: String, default: '' },
+    })
 </script>
 
 <template>

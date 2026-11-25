@@ -128,7 +128,6 @@ class EventoController extends Controller
     private function formulario(?Evento $evento = null, bool $duplicar = false): Response
     {
         return Inertia::render('Eventos/Form', [
-            // datetime-local exige 'Y-m-d\TH:i' en hora local (APP_TIMEZONE = Buenos Aires).
             'evento' => $evento ? [
                 'id' => $duplicar ? null : $evento->id,
                 'titulo' => $evento->titulo,

@@ -1,5 +1,3 @@
-// El GeoJSON oficial trae los barrios en MAYÚSCULAS y sin tildes ("SAN NICOLAS").
-// Para mostrar: tildes y nombres de uso común. La búsqueda sigue usando el original.
 const EXCEPCIONES = {
     AGRONOMIA: 'Agronomía',
     BOCA: 'La Boca',
@@ -14,7 +12,7 @@ const EXCEPCIONES = {
     'VILLA PUEYRREDON': 'Villa Pueyrredón',
 }
 
-const MENORES = new Set(['de', 'del', 'la', 'las', 'los', 'y'])
+const CONECTORES = new Set(['de', 'del', 'la', 'las', 'los', 'y'])
 
 export function nombreLegible(nombre) {
     if (!nombre) return ''
@@ -24,6 +22,6 @@ export function nombreLegible(nombre) {
     return clave
         .toLocaleLowerCase('es-AR')
         .split(' ')
-        .map((palabra, i) => (i > 0 && MENORES.has(palabra) ? palabra : palabra.charAt(0).toLocaleUpperCase('es-AR') + palabra.slice(1)))
+        .map((palabra, i) => (i > 0 && CONECTORES.has(palabra) ? palabra : palabra.charAt(0).toLocaleUpperCase('es-AR') + palabra.slice(1)))
         .join(' ')
 }

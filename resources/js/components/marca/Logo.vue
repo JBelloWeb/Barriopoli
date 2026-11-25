@@ -1,10 +1,9 @@
 <script setup>
-import Isotipo from '@/components/marca/Isotipo.vue'
+  import Isotipo from '@/components/marca/Isotipo.vue'
 
-// "apilado": isotipo arriba (portadas, login). "horizontal": isotipo a la izquierda (cabeceras).
-defineProps({
-  orientacion: { type: String, default: 'horizontal', validator: (v) => ['horizontal', 'apilado'].includes(v) },
-})
+  defineProps({
+    orientacion: { type: String, default: 'horizontal', validator: (v) => ['horizontal', 'apilado'].includes(v) },
+  })
 </script>
 
 <template>

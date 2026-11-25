@@ -8,43 +8,48 @@ use App\Http\Controllers\EventoController;
 use App\Http\Controllers\FavoritoController;
 use App\Http\Controllers\GeocodificacionController;
 use App\Http\Controllers\MiBarrioController;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\SolicitudEmprendedorController;
 use App\Http\Controllers\Moderacion\CategoriaController;
 use App\Http\Controllers\Moderacion\EventoController as ModeracionEventoController;
 use App\Http\Controllers\Moderacion\PanelController;
 use App\Http\Controllers\Moderacion\SolicitudController;
 use App\Http\Controllers\Moderacion\UsuarioController;
-use App\Http\Controllers\PerfilController;
-use App\Http\Controllers\SolicitudEmprendedorController;
+
 use App\Models\Barrio;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Con "Mi barrio" marcado, la app abre directo en él.
+// Con "Mi barrio" marcado, la app abre directo en ese barrio.
 Route::get('/', function (Request $request) {
     $slug = $request->user()?->barrioPropio()->value('slug');
 
     return $slug ? to_route('barrios.show', $slug) : to_route('barrios.index');
-})->name('inicio');
-// /logout solo cierra sesión por POST (Fortify). Si alguien abre la URL a mano o la recarga,
-// no se lo desloguea (un GET que cierra sesión es vulnerable a CSRF): se lo lleva a donde está "Salir".
-Route::get('/logout', fn (Request $request) => $request->user() ? to_route('perfil') : to_route('barrios.index'))
-    ->name('logout.get');
+})->name( 'inicio');
+
+
+Route::get('/logout', fn (Request $request) => $request->user() ? to_route('perfil') : to_route('barrios.index'))->name('logout.get');
 Route::get('/barrios', [BarrioController::class, 'index'])->name('barrios.index');
 Route::get('/barrios/{slug}', [BarrioController::class, 'show'])->name('barrios.show');
-// Siluetas simplificadas de los 48 barrios para la vista ciudad (cacheadas).
+
+// Siluetas de barios cacheadas.
 Route::get('/geo/barrios.json', BarrioGeoController::class)->name('geo.barrios');
 Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
 Route::get('/eventos/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->name('eventos.show');
-// Pública: la policy 'view' deja descargar solo publicados (o propios).
+
+
 Route::get('/emprendimientos/{emprendedor}', [EmprendimientoController::class, 'show'])->whereNumber('emprendedor')->name('emprendimientos.show');
 Route::get('/eventos/{evento}/calendario.ics', [AgendaController::class, 'exportarEvento'])->whereNumber('evento')->name('eventos.ics');
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil');
-    // Guarda con las rutas de Fortify: PUT /user/profile-information y PUT /user/password.
+
+    // Rutas de Fortify
     Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
 
-    // Favoritos y Mi barrio: requieren cuenta, no email verificado (no publican nada).
+    
+    // Favoritos y Mi barrio
     Route::put('/favoritos/{barrio:slug}', [FavoritoController::class, 'update'])->name('favoritos.update');
     Route::delete('/favoritos/{barrio:slug}', [FavoritoController::class, 'destroy'])->name('favoritos.destroy');
     Route::put('/mi-barrio/{barrio:slug}', [MiBarrioController::class, 'update'])->name('mi-barrio.update');
@@ -60,7 +65,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/emprendedor/solicitud', [SolicitudEmprendedorController::class, 'store'])->name('solicitud.store');
         Route::post('/perfil/emprendimiento', [SolicitudEmprendedorController::class, 'cambiarNombre'])->name('perfil.emprendimiento');
 
-        // La autorización fina (autor o moderador) la hacen EventoPolicy y EventoRequest.
         Route::get('/mis-eventos', [EventoController::class, 'misEventos'])->name('mis-eventos');
         Route::get('/eventos/crear', [EventoController::class, 'create'])->name('eventos.create');
         Route::post('/eventos', [EventoController::class, 'store'])->name('eventos.store');
@@ -72,7 +76,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/geocodificar', [GeocodificacionController::class, 'buscar'])->middleware('throttle:geocodificar')->name('geocodificar');
         Route::get('/geocodificar/barrio', [GeocodificacionController::class, 'detectar'])->middleware('throttle:60,1')->name('geocodificar.barrio');
     });
+
 });
+
+
 
 Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderacion.')->group(function () {
     Route::get('/', [PanelController::class, 'index'])->name('index');
@@ -90,12 +97,3 @@ Route::middleware(['auth', 'can:moderar'])->prefix('moderacion')->name('moderaci
     Route::get('/usuarios/{usuario}', [UsuarioController::class, 'show'])->whereNumber('usuario')->name('usuarios.show');
     Route::put('/usuarios/{usuario}/rol', [UsuarioController::class, 'cambiarRol'])->whereNumber('usuario')->name('usuarios.rol');
 });
-
-// Guía de estilos (PLAN-07): solo en local, para validar tokens y componentes.
-if (app()->isLocal()) {
-    Route::get('/dev/estilos', fn () => Inertia\Inertia::render('Dev/Estilos', [
-        'barrios' => Barrio::whereIn('slug', ['palermo', 'boca', 'villa-devoto', 'nueva-pompeya', 'villa-riachuelo', 'san-nicolas'])
-            ->orderBy('nombre')
-            ->get(['id', 'nombre', 'slug', 'geojson']),
-    ]))->name('dev.estilos');
-}

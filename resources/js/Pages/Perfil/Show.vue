@@ -1,34 +1,33 @@
 <script setup>
-import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import Onda from '@/components/marca/Onda.vue'
-import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
-import Boton from '@/components/ui/Boton.vue'
-import Icono from '@/components/ui/Icono.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import { ROLES } from '@/lib/roles'
-import { nombreLegible } from '@/lib/texto'
+    import { computed } from 'vue'
+    import { Link, usePage } from '@inertiajs/vue3'
+    import AppLayout from '@/layouts/AppLayout.vue'
+    import Onda from '@/components/marca/Onda.vue'
+    import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
+    import Boton from '@/components/ui/Boton.vue'
+    import Icono from '@/components/ui/Icono.vue'
+    import Insignia from '@/components/ui/Insignia.vue'
+    import Tarjeta from '@/components/ui/Tarjeta.vue'
+    import { ROLES } from '@/lib/roles'
+    import { nombreLegible } from '@/lib/texto'
 
-defineOptions({ layout: AppLayout })
-defineProps({
-  solicitud: { type: Object, default: null },
-  emprendimiento: { type: String, default: null },
-  miBarrio: { type: Object, default: null },
-  cantidades: { type: Object, default: () => ({ favoritos: 0, agendados: 0 }) },
-})
+    defineOptions({ layout: AppLayout })
+    defineProps({
+      solicitud: { type: Object, default: null },
+      emprendimiento: { type: String, default: null },
+      miBarrio: { type: Object, default: null },
+      cantidades: { type: Object, default: () => ({ favoritos: 0, agendados: 0 }) },
+    })
 
-const page = usePage()
-const auth = computed(() => page.props.auth)
-const inicial = computed(() => auth.value.user.name.trim().charAt(0).toUpperCase())
+    const page = usePage()
+    const auth = computed(() => page.props.auth)
+    const inicial = computed(() => auth.value.user.name.trim().charAt(0).toUpperCase())
 
-const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibold hover:bg-violeta-50'
+    const fila = 'flex min-h-14 w-full items-center gap-3 px-4 text-left font-semibold hover:bg-violeta-50'
 </script>
 
 <template>
   <div class="pb-10">
-    <!-- Cabecera de marca: bloque violeta con la onda, como las portadas. -->
     <header class="relative overflow-hidden rounded-b-[2rem] bg-violeta-600 px-4 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))] text-papel">
       <Onda espejo class="pointer-events-none absolute -right-6 -top-6 w-40 text-violeta-400 md:w-56" />
       <div class="relative mx-auto flex max-w-lg items-center gap-4">

@@ -1,21 +1,21 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Onda from '@/components/marca/Onda.vue'
-import Boton from '@/components/ui/Boton.vue'
-import CampoArea from '@/components/ui/CampoArea.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
+  import { useForm } from '@inertiajs/vue3'
+  import AppLayout from '@/layouts/AppLayout.vue'
+  import CampoTexto from '@/components/CampoTexto.vue'
+  import Onda from '@/components/marca/Onda.vue'
+  import Boton from '@/components/ui/Boton.vue'
+  import CampoArea from '@/components/ui/CampoArea.vue'
+  import Tarjeta from '@/components/ui/Tarjeta.vue'
 
-defineOptions({ layout: AppLayout })
-const form = useForm({ nombre_emprendimiento: '', descripcion: '', enlace: '' })
+  defineOptions({ layout: AppLayout })
+  const form = useForm({ nombre_emprendimiento: '', descripcion: '', enlace: '' })
 
-// Pasos numerados en círculos durazno: el patrón del "Pasaporte Barriopoli".
-const pasos = [
-  ['Contanos', 'Qué hacés y dónde podemos conocerte.'],
-  ['Lo revisamos', 'Un moderador valida tu emprendimiento.'],
-  ['Publicás', 'Tus eventos aparecen en el mapa del barrio.'],
-]
+
+  const pasos = [
+    ['Contanos', 'Qué hacés y dónde podemos conocerte.'],
+    ['Lo revisamos', 'Un moderador valida tu emprendimiento.'],
+    ['Publicás', 'Tus eventos aparecen en el mapa del barrio.'],
+  ]
 </script>
 
 <template>

@@ -1,26 +1,24 @@
 <script setup>
-import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import MapaLayout from '@/layouts/MapaLayout.vue'
-import FavoritoBoton from '@/components/FavoritoBoton.vue'
-import Icono from '@/components/ui/Icono.vue'
-import { nombreLegible } from '@/lib/texto'
+    import { computed } from 'vue'
+    import { Link, usePage } from '@inertiajs/vue3'
+    import AppLayout from '@/layouts/AppLayout.vue'
+    import MapaLayout from '@/layouts/MapaLayout.vue'
+    import FavoritoBoton from '@/components/FavoritoBoton.vue'
+    import Icono from '@/components/ui/Icono.vue'
+    import { nombreLegible } from '@/lib/texto'
 
-// Layouts anidados: AppLayout (barra inferior) envuelve a MapaLayout (mapa + buscador).
-// Ambos persisten entre /barrios y /barrios/{slug}, así el mapa no se recarga.
-defineOptions({ layout: [AppLayout, MapaLayout] })
+    defineOptions({ layout: [AppLayout, MapaLayout] })
 
-const props = defineProps({ barrios: { type: Array, default: () => [] } })
+    const props = defineProps({ barrios: { type: Array, default: () => [] } })
 
-const page = usePage()
-// Mi barrio primero; el resto en orden alfabético (como llega la lista).
-const favoritos = computed(() => {
-    const ids = page.props.favoritosIds ?? []
-    return props.barrios
-        .filter((b) => ids.includes(b.id))
-        .sort((a, b) => (b.id === page.props.barrioPropioId) - (a.id === page.props.barrioPropioId))
-})
+    const page = usePage()
+
+    const favoritos = computed(() => {
+        const ids = page.props.favoritosIds ?? []
+        return props.barrios
+            .filter((b) => ids.includes(b.id))
+            .sort((a, b) => (b.id === page.props.barrioPropioId) - (a.id === page.props.barrioPropioId))
+    })
 </script>
 
 <template>
@@ -46,7 +44,6 @@ const favoritos = computed(() => {
             </p>
         </template>
 
-        <!-- Leyenda: el color no es la única pista (también está la lista de arriba). -->
         <ul v-if="page.props.auth.user" class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-niebla-600">
             <li class="flex items-center gap-1.5"><span class="size-3 rounded-sm bg-durazno-200 ring-1 ring-lila-400"></span> Mi barrio</li>
             <li class="flex items-center gap-1.5"><span class="size-3 rounded-sm bg-durazno-100 ring-1 ring-lila-400"></span> Favoritos</li>

@@ -1,12 +1,11 @@
 <script setup>
-// URL propia del evento: permite compartirlo.
-import AppLayout from '@/layouts/AppLayout.vue'
-import EventoDetalle from '@/components/EventoDetalle.vue'
-import Boton from '@/components/ui/Boton.vue'
-import Icono from '@/components/ui/Icono.vue'
+    import AppLayout from '@/layouts/AppLayout.vue'
+    import EventoDetalle from '@/components/EventoDetalle.vue'
+    import Boton from '@/components/ui/Boton.vue'
+    import Icono from '@/components/ui/Icono.vue'
 
-defineOptions({ layout: AppLayout })
-defineProps({ evento: { type: Object, required: true } })
+    defineOptions({ layout: AppLayout })
+    defineProps({ evento: { type: Object, required: true } })
 </script>
 
 <template>

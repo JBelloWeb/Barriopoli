@@ -1,21 +1,21 @@
 <script setup>
-import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import Isotipo from '@/components/marca/Isotipo.vue'
-import Onda from '@/components/marca/Onda.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
+  import { computed } from 'vue';
+  import { Link, usePage } from '@inertiajs/vue3';
+  import Isotipo from '@/components/marca/Isotipo.vue';
+  import Onda from '@/components/marca/Onda.vue';
+  import Tarjeta from '@/components/ui/Tarjeta.vue';
 
-defineProps({
-  titulo: { type: String, required: true },
-  subtitulo: { type: String, default: '' },
-})
-const page = usePage()
-const estado = computed(() => page.props.status)
+  defineProps({
+    titulo: { type: String, required: true },
+    subtitulo: { type: String, default: '' },
+  })
+
+  const page = usePage();
+  const estado = computed(() => page.props.status);
 </script>
 
 <template>
   <div class="relative min-h-dvh overflow-hidden bg-papel">
-    <!-- Recursos de las portadas: onda arriba a la izquierda (y abajo a la derecha en desktop). -->
     <Onda class="pointer-events-none absolute -left-6 -top-6 w-32 text-violeta-500 md:w-56" />
     <Onda espejo class="pointer-events-none absolute -bottom-6 -right-6 hidden w-56 text-violeta-500 md:block" />
 

@@ -44,13 +44,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasVerifiedEmail() && in_array($this->rol, [Rol::Emprendedor, Rol::Moderador], true);
     }
 
-    /** Emprendedores con nombre público: los usan la API y el perfil público. */
     public function scopeEmprendimientosPublicos(Builder $query): Builder
     {
         return $query->where('rol', Rol::Emprendedor)->whereNotNull('emprendimiento');
     }
-
-    /** Búsqueda del admin de usuarios: nombre, email o emprendimiento. */
     public function scopeBuscar(Builder $query, ?string $texto): Builder
     {
         return $query->when($texto, fn (Builder $q) => $q->where(fn (Builder $w) => $w
@@ -74,16 +71,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Evento::class)->withTimestamps();
     }
 
-    /** Eventos que cargó (como emprendedor o moderador). */
     public function eventos(): HasMany
     {
         return $this->hasMany(Evento::class);
     }
 
-    /**
-     * Agenda tal como la ve la persona (web y API). withTrashed: el cancelado se
-     * conserva con la etiqueta "Cancelado"; se ocultan los rechazados después de agendarlos.
-     */
     public function agendaVisible(string $vista = 'proximos'): BelongsToMany
     {
         $eventos = $this->eventosAgendados()
@@ -95,7 +87,6 @@ class User extends Authenticatable implements MustVerifyEmail
             : $eventos->vigentes()->orderBy('inicio');
     }
 
-    // barrio_propio_id queda fuera de Fillable: solo lo cambia MiBarrioController.
     public function barrioPropio(): BelongsTo
     {
         return $this->belongsTo(Barrio::class, 'barrio_propio_id');

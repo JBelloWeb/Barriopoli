@@ -6,7 +6,6 @@ use App\Enums\Rol;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** La ruta ya exige can:moderar; acá solo se valida el pedido. */
 class CambiarRolRequest extends FormRequest
 {
     public function rules(): array

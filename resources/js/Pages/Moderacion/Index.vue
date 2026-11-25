@@ -1,44 +1,44 @@
 <script setup>
-import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CategoriasPanel from '@/components/moderacion/CategoriasPanel.vue'
-import EventosPanel from '@/components/moderacion/EventosPanel.vue'
-import MotivoRechazo from '@/components/moderacion/MotivoRechazo.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
+    import { ref } from 'vue';
+    import { router } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import CategoriasPanel from '@/components/moderacion/CategoriasPanel.vue';
+    import EventosPanel from '@/components/moderacion/EventosPanel.vue';
+    import MotivoRechazo from '@/components/moderacion/MotivoRechazo.vue';
+    import Boton from '@/components/ui/Boton.vue';
+    import EstadoVacio from '@/components/ui/EstadoVacio.vue';
+    import Insignia from '@/components/ui/Insignia.vue';
+    import Tarjeta from '@/components/ui/Tarjeta.vue';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  solicitudes: { type: Array, default: () => [] },
-  categorias: { type: Array, default: () => [] },
-  eventosPendientes: { type: Array, default: () => [] },
-})
+    defineOptions({ layout: AppLayout })
+    const props = defineProps({
+      solicitudes: { type: Array, default: () => [] },
+      categorias: { type: Array, default: () => [] },
+      eventosPendientes: { type: Array, default: () => [] },
+    })
 
-const pestana = ref(props.solicitudes.length || !props.eventosPendientes.length ? 'solicitudes' : 'eventos')
-const pestanas = [
-  { valor: 'solicitudes', texto: 'Solicitudes', cantidad: () => props.solicitudes.length },
-  { valor: 'eventos', texto: 'Eventos', cantidad: () => props.eventosPendientes.length },
-  { valor: 'categorias', texto: 'Categorías', cantidad: () => props.categorias.length },
-]
+    const pestana = ref(props.solicitudes.length || !props.eventosPendientes.length ? 'solicitudes' : 'eventos')
+    const pestanas = [
+      { valor: 'solicitudes', texto: 'Solicitudes', cantidad: () => props.solicitudes.length },
+      { valor: 'eventos', texto: 'Eventos', cantidad: () => props.eventosPendientes.length },
+      { valor: 'categorias', texto: 'Categorías', cantidad: () => props.categorias.length },
+    ]
 
-const aprobar = (id) => router.post(`/moderacion/solicitudes/${id}/aprobar`, {}, { preserveScroll: true })
+    const aprobar = (id) => router.post(`/moderacion/solicitudes/${id}/aprobar`, {}, { preserveScroll: true })
 
-const rechazando = ref(null)
-const hojaRechazo = ref(false)
-const procesando = ref(false)
-const pedirRechazo = (id) => {
-  rechazando.value = id
-  hojaRechazo.value = true
-}
-const rechazar = (motivo) => router.post(`/moderacion/solicitudes/${rechazando.value}/rechazar`, { motivo }, {
-  preserveScroll: true,
-  onStart: () => { procesando.value = true },
-  onFinish: () => { procesando.value = false },
-  onSuccess: () => { hojaRechazo.value = false },
-})
+    const rechazando = ref(null)
+    const hojaRechazo = ref(false)
+    const procesando = ref(false)
+    const pedirRechazo = (id) => {
+      rechazando.value = id
+      hojaRechazo.value = true
+    }
+    const rechazar = (motivo) => router.post(`/moderacion/solicitudes/${rechazando.value}/rechazar`, { motivo }, {
+      preserveScroll: true,
+      onStart: () => { procesando.value = true },
+      onFinish: () => { procesando.value = false },
+      onSuccess: () => { hojaRechazo.value = false },
+    })
 </script>
 
 <template>

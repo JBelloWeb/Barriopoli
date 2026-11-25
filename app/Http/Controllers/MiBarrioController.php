@@ -12,8 +12,6 @@ class MiBarrioController extends Controller
     public function update(Request $request, Barrio $barrio): RedirectResponse
     {
         $user = $request->user();
-
-        // Mi barrio siempre es favorito: se agrega en la misma transacción.
         DB::transaction(function () use ($user, $barrio) {
             $user->barriosFavoritos()->syncWithoutDetaching([$barrio->id]);
             $user->forceFill(['barrio_propio_id' => $barrio->id])->save();

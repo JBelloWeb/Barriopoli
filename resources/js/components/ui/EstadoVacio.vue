@@ -1,13 +1,12 @@
 <script setup>
-// Pantallas vacías con voz de marca. Si llega un barrio, se dibuja su silueta; si no, el isotipo.
-import Isotipo from '@/components/marca/Isotipo.vue'
-import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue'
+  import Isotipo from '@/components/marca/Isotipo.vue';
+  import SiluetaBarrio from '@/components/marca/SiluetaBarrio.vue';
 
-defineProps({
-  titulo: { type: String, default: 'Todo lo que pasa, a la vuelta.' },
-  texto: { type: String, default: '' },
-  geojson: { type: [Object, String], default: null },
-})
+  defineProps({
+    titulo: { type: String, default: 'Todo lo que pasa, a la vuelta.' },
+    texto: { type: String, default: '' },
+    geojson: { type: [Object, String], default: null },
+  })
 </script>
 
 <template>

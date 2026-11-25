@@ -32,7 +32,7 @@ class PerfilController extends Controller
 
         return Inertia::render('Perfil/Editar', [
             'emprendimiento' => $user->rol === Rol::Emprendedor ? $user->emprendimiento : null,
-            // Último pedido de cambio de nombre: pendiente o rechazado con su motivo.
+
             'cambioNombre' => $user->rol === Rol::Emprendedor
                 ? $user->solicitudes()
                     ->where('tipo', TipoSolicitud::CambioNombre)

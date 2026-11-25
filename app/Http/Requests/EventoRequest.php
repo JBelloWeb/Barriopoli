@@ -16,9 +16,7 @@ class EventoRequest extends FormRequest
     {
         $evento = $this->route('evento');
 
-        return $evento
-            ? $this->user()->can('update', $evento)
-            : $this->user()->can('create', Evento::class);
+        return $evento ? $this->user()->can('update', $evento) : $this->user()->can('create', Evento::class);
     }
 
     public function rules(): array
@@ -28,7 +26,6 @@ class EventoRequest extends FormRequest
         return [
             'titulo' => ['required', 'string', 'max:120'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
-            // También la categoría actual: si se desactivó después, el evento se puede editar sin cambiarla.
             'categoria_id' => ['required', Rule::exists('categorias', 'id')->where(
                 fn ($query) => $query->where('activa', true)->orWhere('id', $evento?->categoria_id)
             )],
@@ -52,7 +49,6 @@ class EventoRequest extends FormRequest
         ];
     }
 
-    /** El barrio lo decide el servidor desde el punto: barrio y coordenadas nunca pueden discrepar. */
     public function after(): array
     {
         return [function (Validator $validator) {

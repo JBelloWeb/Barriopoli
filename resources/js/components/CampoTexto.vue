@@ -1,18 +1,19 @@
 <script setup>
-import { computed, useId } from 'vue'
-import Icono from '@/components/ui/Icono.vue'
-import { claseAyuda, claseControl, claseError, claseEtiqueta } from '@/lib/campos'
+  import { computed, useId } from 'vue';
+  import Icono from '@/components/ui/Icono.vue';
+  import { claseAyuda, claseControl, claseError, claseEtiqueta } from '@/lib/campos';
 
-defineOptions({ inheritAttrs: false })
-const modelo = defineModel({ default: '' })
-const props = defineProps({
-  etiqueta: { type: String, required: true },
-  error: { type: String, default: null },
-  ayuda: { type: String, default: null },
-  tipo: { type: String, default: 'text' },
-})
-const id = useId()
-const descripcion = computed(() => [props.error && `${id}-error`, props.ayuda && `${id}-ayuda`].filter(Boolean).join(' ') || undefined)
+  defineOptions({ inheritAttrs: false });
+  const modelo = defineModel({ default: '' });
+  const props = defineProps({
+    etiqueta: { type: String, required: true },
+    error: { type: String, default: null },
+    ayuda: { type: String, default: null },
+    tipo: { type: String, default: 'text' },
+  });
+
+  const id = useId();
+  const descripcion = computed(() => [props.error && `${id}-error`, props.ayuda && `${id}-ayuda`].filter(Boolean).join(' ') || undefined);
 </script>
 
 <template>

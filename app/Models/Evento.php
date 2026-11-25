@@ -14,13 +14,10 @@ class Evento extends Model
 {
     use SoftDeletes;
 
-    /** Cambiarlos en un evento publicado lo devuelve a revisión. */
     public const CAMPOS_SENSIBLES = ['titulo', 'descripcion', 'categoria_id', 'direccion', 'latitud', 'longitud'];
 
-    /** Se publican directo: un cambio de horario de último momento no espera al moderador. */
     public const CAMPOS_HORARIO = ['inicio', 'fin'];
 
-    // estado y user_id fuera de fillable: un autor no puede autoaprobarse enviando estado=publicado.
     protected $fillable = [
         'barrio_id', 'categoria_id', 'titulo', 'descripcion',
         'direccion', 'latitud', 'longitud', 'inicio', 'fin',

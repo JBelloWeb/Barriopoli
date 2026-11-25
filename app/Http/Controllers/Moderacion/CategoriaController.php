@@ -29,7 +29,7 @@ class CategoriaController extends Controller
 
     public function destroy(Categoria $categoria): RedirectResponse
     {
-        // Con DB y no con la relación: también cuenta eventos dados de baja lógica, que siguen ocupando la FK.
+
         if (DB::table('eventos')->where('categoria_id', $categoria->id)->exists()) {
             Inertia::flash('error', 'Tiene eventos asociados: desactivala en lugar de borrarla.');
 

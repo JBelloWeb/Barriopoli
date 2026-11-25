@@ -33,7 +33,6 @@ class EventoController extends Controller
 
         $eventos = Evento::publicados()
             ->with(WebEventoController::RELACIONES)
-            // Sin "desde": solo vigentes (lo mismo que muestra el mapa).
             ->when(
                 $filtros['desde'] ?? null,
                 fn ($query, $desde) => $query->whereRaw('COALESCE(eventos.fin, eventos.inicio) >= ?', [Carbon::parse($desde)]),
@@ -52,7 +51,6 @@ class EventoController extends Controller
 
     public function show(Evento $evento): EventoResource
     {
-        // Ruta pública: solo publicados. 404 y no 403 para no revelar pendientes; el autor los ve en /mis-eventos.
         abort_unless($evento->estado === EstadoEvento::Publicado, 404);
 
         return EventoResource::make($evento->load(WebEventoController::RELACIONES));
@@ -78,8 +76,7 @@ class EventoController extends Controller
             ->setStatusCode(201)
             ->header('Location', route('api.v1.eventos.show', $evento));
     }
-
-    /** Con imagen: POST multipart + _method=PUT (PHP no parsea multipart en PUT). */
+    
     public function update(EventoRequest $request, Evento $evento, GuardarEvento $guardar): EventoResource
     {
         return EventoResource::make($guardar->actualizar($request, $evento)->load(WebEventoController::RELACIONES));

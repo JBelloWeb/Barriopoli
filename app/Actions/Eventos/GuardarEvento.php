@@ -9,7 +9,6 @@ use App\Notifications\CambioEnEvento;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
-/** Alta y edición de eventos: la comparten la web (Inertia) y la API /api/v1. */
 class GuardarEvento
 {
     public function crear(EventoRequest $request): Evento
@@ -27,7 +26,6 @@ class GuardarEvento
     {
         $evento->fill($request->datosEvento());
 
-        // isDirty compara contra el original con casts: un pin idéntico o la misma fecha no disparan reaprobación.
         $cambioImagen = $request->hasFile('imagen') || $request->boolean('quitar_imagen');
         $cambioSensible = $cambioImagen || $evento->isDirty(Evento::CAMPOS_SENSIBLES);
 

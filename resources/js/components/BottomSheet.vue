@@ -1,40 +1,41 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import Icono from '@/components/ui/Icono.vue'
+  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import Icono from '@/components/ui/Icono.vue';
 
-const abierto = defineModel({ type: Boolean, default: false })
-defineProps({ titulo: { type: String, default: '' } })
+  const abierto = defineModel({ type: Boolean, default: false });
+  defineProps({ titulo: { type: String, default: '' } });
 
-const desplazamiento = ref(0)
-let inicioY = null
+  const desplazamiento = ref(0);
+  let inicioY = null;
 
-const empezar = (evento) => {
-  inicioY = evento.clientY
-  evento.currentTarget.setPointerCapture(evento.pointerId)
-}
-const mover = (evento) => {
-  if (inicioY !== null) desplazamiento.value = Math.max(0, evento.clientY - inicioY)
-}
-const soltar = () => {
-  if (desplazamiento.value > 100) abierto.value = false
-  desplazamiento.value = 0
-  inicioY = null
-}
+  const empezar = (evento) => {
+    inicioY = evento.clientY;
+    evento.currentTarget.setPointerCapture(evento.pointerId);
+  }
 
-const alPresionarTecla = (evento) => {
-  if (evento.key === 'Escape') abierto.value = false
-}
+  const mover = (evento) => {
+    if (inicioY !== null) desplazamiento.value = Math.max(0, evento.clientY - inicioY);
+  }
 
-watch(abierto, (valor) => {
-  if (valor) window.addEventListener('keydown', alPresionarTecla)
-  else window.removeEventListener('keydown', alPresionarTecla)
-})
-onBeforeUnmount(() => window.removeEventListener('keydown', alPresionarTecla))
+  const soltar = () => {
+    if (desplazamiento.value > 100) abierto.value = false;
+    desplazamiento.value = 0;
+    inicioY = null;
+  }
 
-// Con SSR, un Teleport a body no coincide con el HTML del servidor (hydration mismatch):
-// se monta recién en el cliente.
-const montado = ref(false)
-onMounted(() => { montado.value = true })
+  const alPresionarTecla = (evento) => {
+    if (evento.key === 'Escape') abierto.value = false;
+  }
+
+  watch(abierto, (valor) => {
+    if (valor) window.addEventListener('keydown', alPresionarTecla);
+    else window.removeEventListener('keydown', alPresionarTecla);
+  })
+
+  onBeforeUnmount(() => window.removeEventListener('keydown', alPresionarTecla));
+
+  const montado = ref(false);
+  onMounted(() => { montado.value = true });
 </script>
 
 <template>

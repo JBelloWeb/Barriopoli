@@ -1,55 +1,49 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { router } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import BottomSheet from '@/components/BottomSheet.vue'
-import EventoDetalle from '@/components/EventoDetalle.vue'
-import EventoTarjeta from '@/components/EventoTarjeta.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Icono from '@/components/ui/Icono.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import { formatearEvento } from '@/lib/fechas'
+  import { computed, ref } from 'vue';
+  import { router } from '@inertiajs/vue3';
+  import AppLayout from '@/layouts/AppLayout.vue';
+  import BottomSheet from '@/components/BottomSheet.vue';
+  import EventoDetalle from '@/components/EventoDetalle.vue';
+  import EventoTarjeta from '@/components/EventoTarjeta.vue';
+  import Boton from '@/components/ui/Boton.vue';
+  import EstadoVacio from '@/components/ui/EstadoVacio.vue';
+  import Icono from '@/components/ui/Icono.vue';
+  import Insignia from '@/components/ui/Insignia.vue';
+  import { formatearEvento } from '@/lib/fechas';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  eventos: { type: Array, required: true },
-  vista: { type: String, required: true },
-  avisos: { type: Array, default: () => [] },
-})
+  defineOptions({ layout: AppLayout })
+  const props = defineProps({
+    eventos: { type: Array, required: true },
+    vista: { type: String, required: true },
+    avisos: { type: Array, default: () => [] },
+  });
 
-const activo = ref(null)
-const hojaAbierta = computed({
-  get: () => activo.value !== null,
-  set: (valor) => { if (!valor) activo.value = null },
-})
+  const activo = ref(null);
+  const hojaAbierta = computed({
+    get: () => activo.value !== null,
+    set: (valor) => { if (!valor) activo.value = null },
+  });
 
-// Encabezado de día largo ("Sábado 5 de diciembre") en hora de Buenos Aires.
-const diaLargo = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'long', day: 'numeric', month: 'long' })
-const tituloDia = (iso) => {
-  const texto = diaLargo.format(new Date(iso)).replace(',', '')
-  return texto.charAt(0).toUpperCase() + texto.slice(1)
-}
-
-// Agrupado por día (el orden ya viene del servidor).
-const porDia = computed(() => {
-  const grupos = new Map()
-  for (const evento of props.eventos) {
-    const dia = tituloDia(evento.inicio)
-    if (!grupos.has(dia)) grupos.set(dia, [])
-    grupos.get(dia).push(evento)
+  const diaLargo = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'long', day: 'numeric', month: 'long' })
+  const tituloDia = (iso) => {
+    const texto = diaLargo.format(new Date(iso)).replace(',', '')
+    return texto.charAt(0).toUpperCase() + texto.slice(1)
   }
-  return [...grupos]
-})
+  const porDia = computed(() => {
+    const grupos = new Map()
+    for (const evento of props.eventos) {
+      const dia = tituloDia(evento.inicio)
+      if (!grupos.has(dia)) grupos.set(dia, [])
+      grupos.get(dia).push(evento)
+    }
+    return [...grupos]
+  })
 
-const cambiarVista = (vista) => router.get('/agenda', vista === 'pasados' ? { vista } : {}, { preserveState: true, replace: true })
-const quitar = (id) => router.delete(`/agenda/${id}`, { preserveScroll: true })
+  const cambiarVista = (vista) => router.get('/agenda', vista === 'pasados' ? { vista } : {}, { preserveState: true, replace: true })
+  const quitar = (id) => router.delete(`/agenda/${id}`, { preserveScroll: true })
 
-const textoAviso = (aviso) => aviso.tipo === 'cancelado'
-  ? `Se canceló «${aviso.titulo}».`
-  : `Cambió el horario de «${aviso.titulo}»: ${formatearEvento(aviso.inicio, aviso.fin)}.`
-
-const vistas = [['proximos', 'Próximos'], ['pasados', 'Pasados']]
+  const textoAviso = (aviso) => aviso.tipo === 'cancelado' ? `Se canceló «${aviso.titulo}».` : `Cambió el horario de «${aviso.titulo}»: ${formatearEvento(aviso.inicio, aviso.fin)}.`
+  const vistas = [['proximos', 'Próximos'], ['pasados', 'Pasados']]
 </script>
 
 <template>
@@ -59,7 +53,7 @@ const vistas = [['proximos', 'Próximos'], ['pasados', 'Pasados']]
         <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Agenda</h1>
         <p class="mt-0.5 font-bold text-niebla-600">Tus planes en el barrio</p>
       </div>
-      <!-- Es una descarga, no una página de Inertia. -->
+
       <Boton
         v-if="vista === 'proximos' && eventos.some((e) => !e.cancelado)"
         href="/agenda/calendario.ics"

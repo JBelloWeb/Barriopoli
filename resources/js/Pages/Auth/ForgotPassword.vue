@@ -1,10 +1,10 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Boton from '@/components/ui/Boton.vue'
+  import { useForm } from '@inertiajs/vue3'
+  import AuthLayout from '@/layouts/AuthLayout.vue'
+  import CampoTexto from '@/components/CampoTexto.vue'
+  import Boton from '@/components/ui/Boton.vue'
 
-const form = useForm({ email: '' })
+  const form = useForm({ email: '' })
 </script>
 
 <template>

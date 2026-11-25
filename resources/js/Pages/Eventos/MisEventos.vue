@@ -1,23 +1,23 @@
 <script setup>
-import { usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import { pastillasEvento } from '@/lib/fechas'
-import { nombreLegible } from '@/lib/texto'
+    import { usePage } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import Boton from '@/components/ui/Boton.vue';
+    import EstadoVacio from '@/components/ui/EstadoVacio.vue';
+    import Insignia from '@/components/ui/Insignia.vue';
+    import Tarjeta from '@/components/ui/Tarjeta.vue';
+    import { pastillasEvento } from '@/lib/fechas';
+    import { nombreLegible } from '@/lib/texto';
 
-defineOptions({ layout: AppLayout })
-defineProps({ eventos: { type: Array, required: true } })
+    defineOptions({ layout: AppLayout });
+    defineProps({ eventos: { type: Array, required: true } });
 
-const page = usePage()
+    const page = usePage();
 
-const estados = {
-  pendiente: { texto: 'En revisión', tono: 'pendiente' },
-  publicado: { texto: 'Publicado', tono: 'publicado' },
-  rechazado: { texto: 'Rechazado', tono: 'rechazado' },
-}
+    const estados = {
+      pendiente: { texto: 'En revisión', tono: 'pendiente' },
+      publicado: { texto: 'Publicado', tono: 'publicado' },
+      rechazado: { texto: 'Rechazado', tono: 'rechazado' },
+    }
 </script>
 
 <template>

@@ -1,16 +1,15 @@
 <script setup>
-// Reemplaza a window.prompt: en mobile es incómodo y no se puede estilar ni validar.
-import { ref, watch } from 'vue'
-import BottomSheet from '@/components/BottomSheet.vue'
-import Boton from '@/components/ui/Boton.vue'
-import CampoArea from '@/components/ui/CampoArea.vue'
+    import { ref, watch } from 'vue'
+    import BottomSheet from '@/components/BottomSheet.vue'
+    import Boton from '@/components/ui/Boton.vue'
+    import CampoArea from '@/components/ui/CampoArea.vue'
 
-const abierto = defineModel({ type: Boolean, default: false })
-defineProps({ titulo: { type: String, default: 'Motivo del rechazo' }, procesando: { type: Boolean, default: false } })
-const emit = defineEmits(['confirmar'])
+    const abierto = defineModel({ type: Boolean, default: false })
+    defineProps({ titulo: { type: String, default: 'Motivo del rechazo' }, procesando: { type: Boolean, default: false } })
+    const emit = defineEmits(['confirmar'])
 
-const motivo = ref('')
-watch(abierto, (valor) => { if (valor) motivo.value = '' })
+    const motivo = ref('')
+    watch(abierto, (valor) => { if (valor) motivo.value = '' })
 </script>
 
 <template>

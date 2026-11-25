@@ -12,15 +12,13 @@ class Barrio extends Model
 {
     protected $guarded = [];
 
-    // Crítico: geom es binaria; serializada hacia Inertia rompe json_encode (UTF-8 inválido).
+    // sucede en la datanbase
     protected $hidden = ['geom'];
 
     protected $casts = ['geojson' => 'array', 'comuna' => 'integer'];
 
     protected static function booted(): void
     {
-        // Mantiene geom sincronizada con geojson (tests y altas sueltas).
-        // Ojo: los seeders con WithoutModelEvents no disparan esto; ahí se llama geomDesde() a mano.
         static::saving(function (Barrio $barrio) {
             if ($barrio->isDirty('geojson') && ! $barrio->geom instanceof Expression) {
                 $barrio->geom = self::geomDesde($barrio->geojson);
@@ -28,7 +26,6 @@ class Barrio extends Model
         });
     }
 
-    /** Acepta un Feature o una geometría; un Polygon se envuelve en MultiPolygon (tipo de la columna). */
     public static function geomDesde(array $geojson): Expression
     {
         $geometria = $geojson['geometry'] ?? $geojson;
@@ -45,7 +42,6 @@ class Barrio extends Model
         return $this->hasMany(Evento::class);
     }
 
-    /** MySQL 8 lee SRID 4326 como lat-long: sin 'axis-order=long-lat' no encuentra nada. */
     public function scopeQueContiene(Builder $query, float $latitud, float $longitud): Builder
     {
         return $query->whereRaw(

@@ -25,7 +25,6 @@ class SolicitudEmprendedorController extends Controller
         return to_route('perfil');
     }
 
-    /** El nombre público no cambia hasta que un moderador apruebe la solicitud. */
     public function cambiarNombre(CambioNombreRequest $request): RedirectResponse
     {
         $solicitud = new SolicitudEmprendedor([

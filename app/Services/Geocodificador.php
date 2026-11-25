@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
-/**
- * Nominatim (OSM). Política de uso: máx. 1 req/s, identificar la app, sin autocompletado.
- * Por eso: solo al tocar "Buscar", caché de 30 días y rate limit 'geocodificar'.
- */
 class Geocodificador
 {
     private const URL = 'https://nominatim.openstreetmap.org/search';

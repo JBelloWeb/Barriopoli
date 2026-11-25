@@ -15,7 +15,6 @@ class EventoController extends Controller
     {
         abort_unless($evento->estado === EstadoEvento::Pendiente, 409);
 
-        // Eventos viejos sin coordenadas: publicarlos los dibujaría en [0,0].
         if ($evento->latitud === null || $evento->longitud === null) {
             Inertia::flash('error', 'Falta la ubicación: el autor tiene que marcarla antes de publicarlo.');
 

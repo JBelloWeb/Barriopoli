@@ -36,7 +36,6 @@ class EmprendimientoController extends Controller
         return EmprendimientoResource::make($emprendimiento);
     }
 
-    /** Solo emprendedores aprobados con nombre público; cuenta sus eventos próximos. */
     private function emprendimientos(): Builder
     {
         return User::emprendimientosPublicos()

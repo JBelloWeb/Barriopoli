@@ -1,30 +1,30 @@
 <script setup>
-import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
-import EventoDetalle from '@/components/EventoDetalle.vue'
-import MotivoRechazo from '@/components/moderacion/MotivoRechazo.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
+  import { ref } from 'vue'
+  import { router } from '@inertiajs/vue3'
+  import EventoDetalle from '@/components/EventoDetalle.vue'
+  import MotivoRechazo from '@/components/moderacion/MotivoRechazo.vue'
+  import Boton from '@/components/ui/Boton.vue'
+  import EstadoVacio from '@/components/ui/EstadoVacio.vue'
+  import Insignia from '@/components/ui/Insignia.vue'
+  import Tarjeta from '@/components/ui/Tarjeta.vue'
 
-defineProps({ eventos: { type: Array, required: true } })
+  defineProps({ eventos: { type: Array, required: true } })
 
-const aprobar = (id) => router.post(`/moderacion/eventos/${id}/aprobar`, {}, { preserveScroll: true })
+  const aprobar = (id) => router.post(`/moderacion/eventos/${id}/aprobar`, {}, { preserveScroll: true })
 
-const rechazando = ref(null)
-const hojaRechazo = ref(false)
-const procesando = ref(false)
-const pedirRechazo = (id) => {
-  rechazando.value = id
-  hojaRechazo.value = true
-}
-const rechazar = (motivo) => router.post(`/moderacion/eventos/${rechazando.value}/rechazar`, { motivo }, {
-  preserveScroll: true,
-  onStart: () => { procesando.value = true },
-  onFinish: () => { procesando.value = false },
-  onSuccess: () => { hojaRechazo.value = false },
-})
+  const rechazando = ref(null)
+  const hojaRechazo = ref(false)
+  const procesando = ref(false)
+  const pedirRechazo = (id) => {
+    rechazando.value = id
+    hojaRechazo.value = true
+  }
+  const rechazar = (motivo) => router.post(`/moderacion/eventos/${rechazando.value}/rechazar`, { motivo }, {
+    preserveScroll: true,
+    onStart: () => { procesando.value = true },
+    onFinish: () => { procesando.value = false },
+    onSuccess: () => { hojaRechazo.value = false },
+  })
 </script>
 
 <template>

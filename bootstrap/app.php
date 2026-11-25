@@ -27,8 +27,6 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        // Páginas de error con la marca (PLAN-07). 403/404/419/429 siempre; 500/503 solo fuera
-        // de local/testing, para no tapar el detalle del error mientras se desarrolla.
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             $estado = $response->getStatusCode();
             $siempre = in_array($estado, [403, 404, 419, 429], true);

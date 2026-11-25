@@ -3,10 +3,6 @@
 use App\Http\Controllers\Api\V1;
 use Illuminate\Support\Facades\Route;
 
-/*
-| API pública de Barriopoli (prefijo /api por bootstrap/app.php).
-| Lectura sin auth. Escritura de eventos con HTTP Basic (email + contraseña) + EventoPolicy.
-*/
 Route::prefix('v1')->name('api.v1.')->middleware('throttle:api')->group(function () {
     Route::get('/barrios', [V1\BarrioController::class, 'index'])->name('barrios.index');
     Route::get('/barrios/{barrio:slug}', [V1\BarrioController::class, 'show'])->name('barrios.show');
@@ -16,7 +12,6 @@ Route::prefix('v1')->name('api.v1.')->middleware('throttle:api')->group(function
     Route::get('/emprendimientos', [V1\EmprendimientoController::class, 'index'])->name('emprendimientos.index');
     Route::get('/emprendimientos/{emprendedor}', [V1\EmprendimientoController::class, 'show'])->whereNumber('emprendedor')->name('emprendimientos.show');
 
-    // throttle antes que auth: también frena los intentos con contraseña incorrecta.
     Route::middleware(['throttle:api-basic', 'auth.basic.once'])->group(function () {
         Route::get('/mis-eventos', [V1\EventoController::class, 'misEventos'])->name('mis-eventos');
         Route::post('/eventos', [V1\EventoController::class, 'store'])->name('eventos.store');

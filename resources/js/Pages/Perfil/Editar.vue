@@ -1,44 +1,43 @@
 <script setup>
-import { computed } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Boton from '@/components/ui/Boton.vue'
-import CampoArea from '@/components/ui/CampoArea.vue'
-import Icono from '@/components/ui/Icono.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
+    import { computed } from 'vue';
+    import { useForm, usePage } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import CampoTexto from '@/components/CampoTexto.vue';
+    import Boton from '@/components/ui/Boton.vue';
+    import CampoArea from '@/components/ui/CampoArea.vue';
+    import Icono from '@/components/ui/Icono.vue';
+    import Tarjeta from '@/components/ui/Tarjeta.vue';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  emprendimiento: { type: String, default: null },
-  cambioNombre: { type: Object, default: null },
-})
+    defineOptions({ layout: AppLayout })
+    const props = defineProps({
+      emprendimiento: { type: String, default: null },
+      cambioNombre: { type: Object, default: null },
+    })
 
-const page = usePage()
-const usuario = computed(() => page.props.auth.user)
+    const page = usePage()
+    const usuario = computed(() => page.props.auth.user)
 
-// Fortify devuelve el resultado en `status`: se traduce acá, junto al formulario que lo produjo.
-const MENSAJES = {
-  'profile-information-updated': 'Guardamos tus datos.',
-  'password-updated': 'Cambiamos tu contraseña.',
-}
-const estado = computed(() => MENSAJES[page.props.status] ?? null)
+    const MENSAJES = {
+      'profile-information-updated': 'Guardamos tus datos.',
+      'password-updated': 'Cambiamos tu contraseña.',
+    }
+    const estado = computed(() => MENSAJES[page.props.status] ?? null)
 
-const perfil = useForm({ name: usuario.value.name, email: usuario.value.email })
-const emailAnterior = usuario.value.email
-const cambioEmail = computed(() => page.props.status === 'profile-information-updated' && !usuario.value.verificado)
-const guardarPerfil = () => perfil.put('/user/profile-information', { errorBag: 'updateProfileInformation', preserveScroll: true })
+    const perfil = useForm({ name: usuario.value.name, email: usuario.value.email })
+    const emailAnterior = usuario.value.email
+    const cambioEmail = computed(() => page.props.status === 'profile-information-updated' && !usuario.value.verificado)
+    const guardarPerfil = () => perfil.put('/user/profile-information', { errorBag: 'updateProfileInformation', preserveScroll: true })
 
-const clave = useForm({ current_password: '', password: '', password_confirmation: '' })
-const guardarClave = () => clave.put('/user/password', {
-  errorBag: 'updatePassword',
-  preserveScroll: true,
-  onFinish: () => clave.reset(),
-})
+    const clave = useForm({ current_password: '', password: '', password_confirmation: '' })
+    const guardarClave = () => clave.put('/user/password', {
+      errorBag: 'updatePassword',
+      preserveScroll: true,
+      onFinish: () => clave.reset(),
+    })
 
-const nombre = useForm({ nombre_emprendimiento: props.emprendimiento ?? '', motivo: '' })
-const pendiente = computed(() => props.cambioNombre?.estado === 'pendiente')
-const pedirNombre = () => nombre.post('/perfil/emprendimiento', { preserveScroll: true, onSuccess: () => nombre.reset('motivo') })
+    const nombre = useForm({ nombre_emprendimiento: props.emprendimiento ?? '', motivo: '' })
+    const pendiente = computed(() => props.cambioNombre?.estado === 'pendiente')
+    const pedirNombre = () => nombre.post('/perfil/emprendimiento', { preserveScroll: true, onSuccess: () => nombre.reset('motivo') })
 </script>
 
 <template>

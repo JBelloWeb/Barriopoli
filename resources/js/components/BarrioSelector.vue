@@ -1,46 +1,46 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
-import Icono from '@/components/ui/Icono.vue'
-import { nombreLegible } from '@/lib/texto'
+    import { computed, ref, watch } from 'vue';
+    import Icono from '@/components/ui/Icono.vue';
+    import { nombreLegible } from '@/lib/texto';
 
-const props = defineProps({
-    barrios: { type: Array, required: true },
-    actual: { type: Object, default: null },
-})
+    const props = defineProps({
+        barrios: { type: Array, required: true },
+        actual: { type: Object, default: null },
+    })
 
-const emit = defineEmits(['selected'])
+    const emit = defineEmits(['selected']);
 
-const busqueda = ref(nombreLegible(props.actual?.nombre))
-const abierto = ref(false)
+    const busqueda = ref(nombreLegible(props.actual?.nombre));
+    const abierto = ref(false);
 
-// El layout persiste: al navegar con la barra o el botón atrás, el texto acompaña al barrio actual.
-watch(() => props.actual?.id, () => { busqueda.value = nombreLegible(props.actual?.nombre) })
+    watch(() => props.actual?.id, () => { busqueda.value = nombreLegible(props.actual?.nombre) });
 
-const normalizar = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    const normalizar = (texto) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-const filtrados = computed(() => {
-    const q = normalizar(busqueda.value)
-    if (!q || q === normalizar(nombreLegible(props.actual?.nombre))) return props.barrios
-    // Se busca en el nombre oficial ("BOCA") y en el legible ("La Boca").
-    return props.barrios.filter((b) => normalizar(b.nombre).includes(q) || normalizar(nombreLegible(b.nombre)).includes(q))
-})
+    const filtrados = computed(() => {
+        const q = normalizar(busqueda.value);
+        if (!q || q === normalizar(nombreLegible(props.actual?.nombre))) return props.barrios;
 
-const elegir = (barrio) => {
-    busqueda.value = nombreLegible(barrio.nombre)
-    abierto.value = false
-    emit('selected', barrio)
-}
+        return props.barrios.filter((b) => normalizar(b.nombre).includes(q) || normalizar(nombreLegible(b.nombre)).includes(q));
+    });
 
-const alPresionarTecla = (evento) => {
-    if (evento.key === 'Escape') abierto.value = false
-    if (evento.key === 'Enter' && filtrados.value.length) elegir(filtrados.value[0])
-}
+    const elegir = (barrio) => {
+        busqueda.value = nombreLegible(barrio.nombre);
+        abierto.value = false;
+        emit('selected', barrio);
+    }
+
+    const alPresionarTecla = (evento) => {
+        if (evento.key === 'Escape') abierto.value = false;
+        if (evento.key === 'Enter' && filtrados.value.length) elegir(filtrados.value[0]);
+    }
 </script>
 
 <template>
     <div class="relative mx-auto w-full max-w-md">
         <label for="buscar-barrio" class="sr-only">Buscar barrio</label>
         <Icono nombre="buscar" class="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-violeta-500" />
+
         <input
             id="buscar-barrio"
             v-model="busqueda"
@@ -65,7 +65,7 @@ const alPresionarTecla = (evento) => {
             role="listbox"
             class="absolute inset-x-0 top-full z-30 mt-2 max-h-[50dvh] overflow-y-auto rounded-3xl bg-white p-2 shadow-flotante"
         >
-            <!-- mousedown.prevent: elige antes de que el blur del input cierre la lista -->
+
             <li
                 v-for="b in filtrados"
                 :key="b.id"

@@ -1,34 +1,33 @@
 <script setup>
-import { reactive, watch } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Icono from '@/components/ui/Icono.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import { debounce, sinVacios } from '@/lib/funciones'
-import { ROLES } from '@/lib/roles'
+    import { reactive, watch } from 'vue';
+    import { Link, router } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import CampoTexto from '@/components/CampoTexto.vue';
+    import Boton from '@/components/ui/Boton.vue';
+    import EstadoVacio from '@/components/ui/EstadoVacio.vue';
+    import Icono from '@/components/ui/Icono.vue';
+    import Insignia from '@/components/ui/Insignia.vue';
+    import Tarjeta from '@/components/ui/Tarjeta.vue';
+    import { debounce, sinVacios } from '@/lib/funciones';
+    import { ROLES } from '@/lib/roles';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  usuarios: { type: Object, required: true },
-  filtros: { type: Object, required: true },
-})
+    defineOptions({ layout: AppLayout })
+    const props = defineProps({
+      usuarios: { type: Object, required: true },
+      filtros: { type: Object, required: true },
+    })
 
-const opcionesRol = [{ valor: '', texto: 'Todos' }, ...Object.entries(ROLES).map(([valor, texto]) => ({ valor, texto }))]
+    const opcionesRol = [{ valor: '', texto: 'Todos' }, ...Object.entries(ROLES).map(([valor, texto]) => ({ valor, texto }))]
 
-const filtros = reactive({ q: props.filtros.q, rol: props.filtros.rol })
+    const filtros = reactive({ q: props.filtros.q, rol: props.filtros.rol })
 
-// Búsqueda en vivo: recarga parcial (solo la lista), sin sumar entradas al historial.
-const buscar = debounce(() => router.get('/moderacion/usuarios', sinVacios(filtros), {
-  preserveState: true,
-  preserveScroll: true,
-  replace: true,
-  only: ['usuarios', 'filtros'],
-}), 300)
-watch(() => [filtros.q, filtros.rol], buscar)
+    const buscar = debounce(() => router.get('/moderacion/usuarios', sinVacios(filtros), {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+      only: ['usuarios', 'filtros'],
+    }), 300)
+    watch(() => [filtros.q, filtros.rol], buscar)
 </script>
 
 <template>

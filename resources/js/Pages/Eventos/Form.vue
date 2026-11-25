@@ -1,85 +1,83 @@
 <script setup>
-// Alta, edición y duplicado de eventos (reemplaza a Edit.vue).
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import UbicacionPicker from '@/components/UbicacionPicker.vue'
-import Boton from '@/components/ui/Boton.vue'
-import CampoArea from '@/components/ui/CampoArea.vue'
-import Icono from '@/components/ui/Icono.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import { claseError, claseEtiqueta } from '@/lib/campos'
-import { comprimirImagen } from '@/lib/comprimirImagen'
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  evento: { type: Object, default: null },
-  categorias: { type: Array, required: true },
-})
+    import { computed, onBeforeUnmount, ref } from 'vue'
+    import { router, useForm, usePage } from '@inertiajs/vue3'
+    import AppLayout from '@/layouts/AppLayout.vue'
+    import CampoTexto from '@/components/CampoTexto.vue'
+    import UbicacionPicker from '@/components/UbicacionPicker.vue'
+    import Boton from '@/components/ui/Boton.vue'
+    import CampoArea from '@/components/ui/CampoArea.vue'
+    import Icono from '@/components/ui/Icono.vue'
+    import Tarjeta from '@/components/ui/Tarjeta.vue'
+    import { claseError, claseEtiqueta } from '@/lib/campos'
+    import { comprimirImagen } from '@/lib/comprimirImagen'
 
-const page = usePage()
-// El moderador publica directo (EventoController): no tiene sentido decirle "enviar a revisión".
-const esModerador = computed(() => page.props.auth.puede.moderar)
-const esEdicion = computed(() => Boolean(props.evento?.id))
-const titulo = computed(() => (esEdicion.value ? 'Editar evento' : props.evento ? 'Duplicar evento' : 'Nuevo evento'))
-const vistaPrevia = ref(props.evento?.imagen_url ?? null)
-const comprimiendo = ref(false)
+    defineOptions({ layout: AppLayout })
+    const props = defineProps({
+      evento: { type: Object, default: null },
+      categorias: { type: Array, required: true },
+    })
 
-const form = useForm({
-  titulo: props.evento?.titulo ?? '',
-  descripcion: props.evento?.descripcion ?? '',
-  categoria_id: props.evento?.categoria_id ?? '',
-  direccion: props.evento?.direccion ?? '',
-  latitud: props.evento?.latitud ?? null,
-  longitud: props.evento?.longitud ?? null,
-  inicio: props.evento?.inicio ?? '',
-  fin: props.evento?.fin ?? '',
-  imagen: null,
-  quitar_imagen: false,
-})
+    const page = usePage()
+    const esModerador = computed(() => page.props.auth.puede.moderar)
+    const esEdicion = computed(() => Boolean(props.evento?.id))
+    const titulo = computed(() => (esEdicion.value ? 'Editar evento' : props.evento ? 'Duplicar evento' : 'Nuevo evento'))
+    const vistaPrevia = ref(props.evento?.imagen_url ?? null)
+    const comprimiendo = ref(false)
 
-const liberarVistaPrevia = () => {
-  if (vistaPrevia.value?.startsWith('blob:')) URL.revokeObjectURL(vistaPrevia.value)
-}
+    const form = useForm({
+      titulo: props.evento?.titulo ?? '',
+      descripcion: props.evento?.descripcion ?? '',
+      categoria_id: props.evento?.categoria_id ?? '',
+      direccion: props.evento?.direccion ?? '',
+      latitud: props.evento?.latitud ?? null,
+      longitud: props.evento?.longitud ?? null,
+      inicio: props.evento?.inicio ?? '',
+      fin: props.evento?.fin ?? '',
+      imagen: null,
+      quitar_imagen: false,
+    })
 
-const elegirImagen = async (evento) => {
-  const archivo = evento.target.files[0]
-  if (!archivo) return
-  comprimiendo.value = true
-  form.imagen = await comprimirImagen(archivo)
-  comprimiendo.value = false
-  form.quitar_imagen = false
-  liberarVistaPrevia()
-  vistaPrevia.value = URL.createObjectURL(form.imagen)
-}
+    const liberarVistaPrevia = () => {
+      if (vistaPrevia.value?.startsWith('blob:')) URL.revokeObjectURL(vistaPrevia.value)
+    }
 
-const quitarImagen = () => {
-  form.imagen = null
-  form.quitar_imagen = esEdicion.value
-  liberarVistaPrevia()
-  vistaPrevia.value = null
-}
+    const elegirImagen = async (evento) => {
+      const archivo = evento.target.files[0]
+      if (!archivo) return
+      comprimiendo.value = true
+      form.imagen = await comprimirImagen(archivo)
+      comprimiendo.value = false
+      form.quitar_imagen = false
+      liberarVistaPrevia()
+      vistaPrevia.value = URL.createObjectURL(form.imagen)
+    }
 
-onBeforeUnmount(liberarVistaPrevia)
+    const quitarImagen = () => {
+      form.imagen = null
+      form.quitar_imagen = esEdicion.value
+      liberarVistaPrevia()
+      vistaPrevia.value = null
+    }
 
-const guardar = () => {
-  const opciones = { forceFormData: true, preserveScroll: true }
-  if (esEdicion.value) {
-    // PHP no procesa multipart en un PUT real: se envía POST con _method=put para que llegue la imagen.
-    form.transform((datos) => ({ ...datos, _method: 'put' })).post(`/eventos/${props.evento.id}`, opciones)
-  } else {
-    form.post('/eventos', opciones)
-  }
-}
+    onBeforeUnmount(liberarVistaPrevia)
 
-const eliminar = () => {
-  if (window.confirm('¿Eliminar este evento? Quienes lo agendaron lo verán como cancelado.')) {
-    router.delete(`/eventos/${props.evento.id}`)
-  }
-}
+    const guardar = () => {
+      const opciones = { forceFormData: true, preserveScroll: true }
+      if (esEdicion.value) {
+        form.transform((datos) => ({ ...datos, _method: 'put' })).post(`/eventos/${props.evento.id}`, opciones)
+      } else {
+        form.post('/eventos', opciones)
+      }
+    }
 
-const leyenda = 'mb-4 text-xs font-bold uppercase tracking-wider text-niebla-600'
+    const eliminar = () => {
+      if (window.confirm('¿Eliminar este evento? Quienes lo agendaron lo verán como cancelado.')) {
+        router.delete(`/eventos/${props.evento.id}`)
+      }
+    }
+
+    const leyenda = 'mb-4 text-xs font-bold uppercase tracking-wider text-niebla-600'
 </script>
 
 <template>
@@ -98,7 +96,6 @@ const leyenda = 'mb-4 text-xs font-bold uppercase tracking-wider text-niebla-600
         <p :class="leyenda" aria-hidden="true">Qué</p>
         <CampoTexto v-model="form.titulo" etiqueta="Título" maxlength="120" required placeholder="Ej.: Feria de diseño en la plaza" :error="form.errors.titulo" />
 
-        <!-- Categoría como chips de opción única: se ven todas y se elige con un toque. -->
         <div role="radiogroup" aria-labelledby="etiqueta-categoria" :aria-describedby="form.errors.categoria_id ? 'error-categoria' : undefined">
           <p id="etiqueta-categoria" :class="claseEtiqueta">Categoría</p>
           <div class="flex flex-wrap gap-2">
@@ -167,7 +164,6 @@ const leyenda = 'mb-4 text-xs font-bold uppercase tracking-wider text-niebla-600
       <Boton v-if="esEdicion" variante="fantasma" icono="papelera" bloque class="text-error!" @click="eliminar">Eliminar evento</Boton>
     </div>
 
-    <!-- Fijo sobre la barra inferior en mobile; en escritorio vuelve al flujo del formulario. -->
     <div class="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 border-t border-niebla-200 bg-papel/95 p-3 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
       <Boton tipo="submit" bloque :cargando="form.processing || comprimiendo">
         {{ form.processing ? 'Guardando…' : esEdicion ? 'Guardar cambios' : esModerador ? 'Publicar' : 'Enviar a revisión' }}

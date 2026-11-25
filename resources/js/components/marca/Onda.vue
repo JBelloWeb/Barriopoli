@@ -1,7 +1,5 @@
 <script setup>
-// Onda con líneas de las portadas: mancha + 5 líneas paralelas. Decorativa.
-// Hereda el color (text-violeta-500 por defecto). "espejo" la refleja para usarla en la esquina opuesta.
-defineProps({ espejo: { type: Boolean, default: false } })
+    defineProps({ espejo: { type: Boolean, default: false } })
 </script>
 
 <template>

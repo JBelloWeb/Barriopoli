@@ -1,25 +1,25 @@
 <script setup>
-import { computed, ref } from 'vue'
-import AppLayout from '@/layouts/AppLayout.vue'
-import BottomSheet from '@/components/BottomSheet.vue'
-import EventoDetalle from '@/components/EventoDetalle.vue'
-import EventoTarjeta from '@/components/EventoTarjeta.vue'
-import Onda from '@/components/marca/Onda.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
-import Icono from '@/components/ui/Icono.vue'
+  import { computed, ref } from 'vue'
+  import AppLayout from '@/layouts/AppLayout.vue'
+  import BottomSheet from '@/components/BottomSheet.vue'
+  import EventoDetalle from '@/components/EventoDetalle.vue'
+  import EventoTarjeta from '@/components/EventoTarjeta.vue'
+  import Onda from '@/components/marca/Onda.vue'
+  import EstadoVacio from '@/components/ui/EstadoVacio.vue'
+  import Icono from '@/components/ui/Icono.vue'
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  emprendimiento: { type: Object, required: true },
-  eventos: { type: Array, default: () => [] },
-})
+  defineOptions({ layout: AppLayout })
+  const props = defineProps({
+    emprendimiento: { type: Object, required: true },
+    eventos: { type: Array, default: () => [] },
+  })
 
-const activo = ref(null)
-const hojaAbierta = computed({
-  get: () => activo.value !== null,
-  set: (valor) => { if (!valor) activo.value = null },
-})
-const cantidad = computed(() => props.eventos.length === 1 ? '1 evento próximo' : `${props.eventos.length} eventos próximos`)
+  const activo = ref(null)
+  const hojaAbierta = computed({
+    get: () => activo.value !== null,
+    set: (valor) => { if (!valor) activo.value = null },
+  })
+  const cantidad = computed(() => props.eventos.length === 1 ? '1 evento próximo' : `${props.eventos.length} eventos próximos`)
 </script>
 
 <template>

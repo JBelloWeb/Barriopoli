@@ -6,12 +6,6 @@ use App\Models\Evento;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
 
-/**
- * iCalendar (RFC 5545) a mano: es texto simple y evita una dependencia.
- * - Fechas en UTC (Z): no hace falta un bloque VTIMEZONE; el celular convierte a su hora.
- * - UID estable + SEQUENCE creciente: reimportar actualiza el evento en vez de duplicarlo.
- * - Sin fin se asumen 2 h: los calendarios muestran mal los eventos de duración cero.
- */
 class CalendarioIcs
 {
     private const HORAS_POR_DEFECTO = 2;
@@ -65,7 +59,6 @@ class CalendarioIcs
         return str_replace(['\\', ';', ',', "\r\n", "\n", "\r"], ['\\\\', '\;', '\,', '\n', '\n', ''], $texto);
     }
 
-    /** RFC 5545: máximo 75 octetos por línea, sin cortar caracteres UTF-8. */
     private function plegar(string $linea): string
     {
         $salida = [];

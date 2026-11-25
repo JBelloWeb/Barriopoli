@@ -26,10 +26,6 @@ class CategoriaRequest extends FormRequest
         ];
     }
 
-    /**
-     * "Música" y "Musica" son nombres distintos pero comparten slug, que es único:
-     * sin este control el segundo alta terminaría en un error 500.
-     */
     public function after(): array
     {
         return [

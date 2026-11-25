@@ -1,34 +1,34 @@
 <script setup>
-import { computed } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Boton from '@/components/ui/Boton.vue'
-import CampoSelect from '@/components/ui/CampoSelect.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import Tarjeta from '@/components/ui/Tarjeta.vue'
-import { ROLES } from '@/lib/roles'
-import { nombreLegible } from '@/lib/texto'
+    import { computed } from 'vue';
+    import { useForm, usePage } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import CampoTexto from '@/components/CampoTexto.vue';
+    import Boton from '@/components/ui/Boton.vue';
+    import CampoSelect from '@/components/ui/CampoSelect.vue';
+    import Insignia from '@/components/ui/Insignia.vue';
+    import Tarjeta from '@/components/ui/Tarjeta.vue';
+    import { ROLES } from '@/lib/roles';
+    import { nombreLegible } from '@/lib/texto';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  usuario: { type: Object, required: true },
-  eventos: { type: Array, default: () => [] },
-  solicitudes: { type: Array, default: () => [] },
-  barrios: { type: Array, default: () => [] },
-})
+    defineOptions({ layout: AppLayout })
+    const props = defineProps({
+      usuario: { type: Object, required: true },
+      eventos: { type: Array, default: () => [] },
+      solicitudes: { type: Array, default: () => [] },
+      barrios: { type: Array, default: () => [] },
+    })
 
-const page = usePage()
-const esPropio = computed(() => page.props.auth.user.id === props.usuario.id)
-const opciones = Object.entries(ROLES).map(([valor, texto]) => ({ valor, texto }))
-const ESTADOS = { pendiente: 'Pendiente', publicado: 'Publicado', rechazado: 'Rechazado', aprobada: 'Aprobada', rechazada: 'Rechazada' }
-const TIPOS = { alta: 'Alta de emprendedor', cambio_nombre: 'Cambio de nombre' }
+    const page = usePage()
+    const esPropio = computed(() => page.props.auth.user.id === props.usuario.id)
+    const opciones = Object.entries(ROLES).map(([valor, texto]) => ({ valor, texto }))
+    const ESTADOS = { pendiente: 'Pendiente', publicado: 'Publicado', rechazado: 'Rechazado', aprobada: 'Aprobada', rechazada: 'Rechazada' }
+    const TIPOS = { alta: 'Alta de emprendedor', cambio_nombre: 'Cambio de nombre' }
 
-const form = useForm({ rol: props.usuario.rol, emprendimiento: props.usuario.emprendimiento ?? '' })
-const cambio = computed(() => form.rol !== props.usuario.rol || (form.rol === 'emprendedor' && form.emprendimiento !== (props.usuario.emprendimiento ?? '')))
-const guardar = () => form.put(`/moderacion/usuarios/${props.usuario.id}/rol`, { preserveScroll: true })
+    const form = useForm({ rol: props.usuario.rol, emprendimiento: props.usuario.emprendimiento ?? '' })
+    const cambio = computed(() => form.rol !== props.usuario.rol || (form.rol === 'emprendedor' && form.emprendimiento !== (props.usuario.emprendimiento ?? '')))
+    const guardar = () => form.put(`/moderacion/usuarios/${props.usuario.id}/rol`, { preserveScroll: true })
 
-const fecha = (iso) => new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+    const fecha = (iso) => new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
 </script>
 
 <template>

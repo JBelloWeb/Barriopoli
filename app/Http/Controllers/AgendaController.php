@@ -27,7 +27,7 @@ class AgendaController extends Controller
             'id' => $aviso->id,
             ...$aviso->data,
         ]);
-        // Se marcan leídos acá: las props compartidas se evalúan después y la insignia vuelve a 0.
+
         $user->unreadNotifications()->update(['read_at' => now()]);
 
         return Inertia::render('Agenda/Index', [
@@ -46,7 +46,6 @@ class AgendaController extends Controller
         return back();
     }
 
-    /** int y no Evento: el route model binding excluye los cancelados y no se podrían quitar. */
     public function destroy(Request $request, int $evento): RedirectResponse
     {
         $request->user()->eventosAgendados()->detach($evento);

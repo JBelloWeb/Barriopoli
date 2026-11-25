@@ -9,10 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Cambio de rol desde el admin de usuarios. Bajar a vecino solo cambia el rol: sus eventos siguen
- * publicados y EventoPolicy le impide editarlos. `emprendimiento` se conserva por si vuelve a subir.
- */
+
 class CambiarRol
 {
     public function __invoke(User $moderador, User $usuario, Rol $rol, ?string $emprendimiento = null): void
@@ -26,7 +23,8 @@ class CambiarRol
         }
 
         DB::transaction(function () use ($moderador, $usuario, $rol, $emprendimiento) {
-            // Bloquea las filas de moderadores: dos moderadores bajándose a la vez no dejan el sistema sin ninguno.
+            
+            // Para que exista al menos uno
             if ($usuario->esModerador() && $rol !== Rol::Moderador
                 && User::where('rol', Rol::Moderador)->lockForUpdate()->count() <= 1) {
                 throw ValidationException::withMessages(['rol' => 'Tiene que quedar al menos un moderador.']);

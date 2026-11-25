@@ -1,47 +1,47 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { InfiniteScroll, router, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import BottomSheet from '@/components/BottomSheet.vue'
-import CategoriaChips from '@/components/CategoriaChips.vue'
-import EventoDetalle from '@/components/EventoDetalle.vue'
-import EventoTarjeta from '@/components/EventoTarjeta.vue'
-import Boton from '@/components/ui/Boton.vue'
-import EstadoVacio from '@/components/ui/EstadoVacio.vue'
+    import { computed, ref, watch } from 'vue';
+    import { InfiniteScroll, router, usePage } from '@inertiajs/vue3';
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import BottomSheet from '@/components/BottomSheet.vue';
+    import CategoriaChips from '@/components/CategoriaChips.vue';
+    import EventoDetalle from '@/components/EventoDetalle.vue';
+    import EventoTarjeta from '@/components/EventoTarjeta.vue'
+    import Boton from '@/components/ui/Boton.vue';
+    import EstadoVacio from '@/components/ui/EstadoVacio.vue';
 
-defineOptions({ layout: AppLayout })
-const props = defineProps({
-  eventos: { type: Object, required: true },
-  categorias: { type: Array, required: true },
-  filtros: { type: Object, required: true },
-})
+    defineOptions({ layout: AppLayout });
 
-const seleccion = ref(props.filtros.categorias)
-const activo = ref(null)
-const hojaAbierta = computed({
-  get: () => activo.value !== null,
-  set: (valor) => { if (!valor) activo.value = null },
-})
+    const props = defineProps({
+      eventos: { type: Object, required: true },
+      categorias: { type: Array, required: true },
+      filtros: { type: Object, required: true },
+    })
 
-const page = usePage()
-const alcance = ref(props.filtros.alcance ?? 'todos')
-const hayFavoritos = computed(() => (page.props.favoritosIds ?? []).length > 0)
+    const seleccion = ref(props.filtros.categorias)
+    const activo = ref(null)
+    const hojaAbierta = computed({
+      get: () => activo.value !== null,
+      set: (valor) => { if (!valor) activo.value = null },
+    })
 
-// reset: al cambiar el filtro, la lista se reemplaza en lugar de sumarse al scroll infinito.
-watch([seleccion, alcance], ([categorias, valor]) => {
-  const params = { categorias, ...(valor === 'mis_barrios' ? { alcance: valor } : {}) }
-  router.get('/eventos', params, { preserveState: true, preserveScroll: false, replace: true, reset: ['eventos'] })
-})
+    const page = usePage()
+    const alcance = ref(props.filtros.alcance ?? 'todos')
+    const hayFavoritos = computed(() => (page.props.favoritosIds ?? []).length > 0)
 
-const opcionesAlcance = [
-  { valor: 'todos', texto: 'Toda la ciudad' },
-  { valor: 'mis_barrios', texto: 'Mis barrios' },
-]
+    watch([seleccion, alcance], ([categorias, valor]) => {
+      const params = { categorias, ...(valor === 'mis_barrios' ? { alcance: valor } : {}) }
+      router.get('/eventos', params, { preserveState: true, preserveScroll: false, replace: true, reset: ['eventos'] })
+    })
 
-const limpiarFiltros = () => {
-  seleccion.value = []
-  alcance.value = 'todos'
-}
+    const opcionesAlcance = [
+      { valor: 'todos', texto: 'Toda la ciudad' },
+      { valor: 'mis_barrios', texto: 'Mis barrios' },
+    ]
+
+    const limpiarFiltros = () => {
+      seleccion.value = []
+      alcance.value = 'todos'
+    }
 </script>
 
 <template>
@@ -52,7 +52,7 @@ const limpiarFiltros = () => {
           <h1 class="titulo-marca text-3xl text-violeta-700 md:text-4xl">Eventos</h1>
           <p class="mt-0.5 font-bold text-niebla-600">Lo que pasa en tus barrios</p>
         </div>
-        <!-- Control segmentado: dos opciones excluyentes. -->
+
         <div v-if="hayFavoritos" role="radiogroup" aria-label="Alcance" class="flex rounded-full bg-niebla-100 p-1">
           <button
             v-for="o in opcionesAlcance"

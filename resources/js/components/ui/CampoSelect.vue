@@ -1,17 +1,18 @@
 <script setup>
-import { useId } from 'vue'
-import Icono from '@/components/ui/Icono.vue'
-import { claseControl, claseError, claseEtiqueta } from '@/lib/campos'
+  import { useId } from 'vue';
+  import Icono from '@/components/ui/Icono.vue';
+  import { claseControl, claseError, claseEtiqueta } from '@/lib/campos';
 
-defineOptions({ inheritAttrs: false })
-const modelo = defineModel({ default: '' })
-defineProps({
-  etiqueta: { type: String, required: true },
-  error: { type: String, default: null },
-  opciones: { type: Array, required: true }, // [{ valor, texto }]
-  placeholder: { type: String, default: 'Elegí una opción' },
-})
-const id = useId()
+  defineOptions({ inheritAttrs: false });
+  const modelo = defineModel({ default: '' });
+  defineProps({
+    etiqueta: { type: String, required: true },
+    error: { type: String, default: null },
+    opciones: { type: Array, required: true }, // [{ valor, texto }]
+    placeholder: { type: String, default: 'Elegí una opción' },
+  });
+
+  const id = useId()
 </script>
 
 <template>

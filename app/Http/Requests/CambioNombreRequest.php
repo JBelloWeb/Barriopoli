@@ -8,7 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-/** Pedido de cambio de nombre del emprendimiento: lo aprueba un moderador antes de publicarse. */
 class CambioNombreRequest extends FormRequest
 {
     public function authorize(): bool

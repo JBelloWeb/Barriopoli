@@ -1,23 +1,22 @@
 <script setup>
-// Páginas de error con la identidad de marca. Sin AppLayout: puede fallar justo lo que el layout necesita.
-import { computed } from 'vue'
-import { Head } from '@inertiajs/vue3'
-import Isotipo from '@/components/marca/Isotipo.vue'
-import Onda from '@/components/marca/Onda.vue'
-import Boton from '@/components/ui/Boton.vue'
+    import { computed } from 'vue';
+    import { Head } from '@inertiajs/vue3';
+    import Isotipo from '@/components/marca/Isotipo.vue';
+    import Onda from '@/components/marca/Onda.vue';
+    import Boton from '@/components/ui/Boton.vue';
 
-const props = defineProps({ estado: { type: Number, required: true } })
+    const props = defineProps({ estado: { type: Number, required: true } });
 
-const TEXTOS = {
-  403: ['Este lugar es solo para vecinos con permiso', 'No tenés acceso a esta página.'],
-  404: ['Nos perdimos en el barrio', 'La página que buscás no existe o se mudó.'],
-  419: ['La página se quedó dormida', 'Pasó mucho tiempo sin actividad. Recargá y probá de nuevo.'],
-  429: ['Vamos más despacio', 'Hiciste muchos pedidos seguidos. Esperá un momento.'],
-  500: ['Algo se rompió', 'Ya estamos en eso. Probá de nuevo en un rato.'],
-  503: ['Estamos de mantenimiento', 'Volvemos enseguida.'],
-}
-const texto = computed(() => TEXTOS[props.estado] ?? TEXTOS[500])
-const recargar = () => window.location.reload()
+    const TEXTOS = {
+      403: ['Este lugar es solo para vecinos con permiso', 'No tenés acceso a esta página.'],
+      404: ['Nos perdimos en el barrio', 'La página que buscás no existe o se mudó.'],
+      419: ['La página se quedó dormida', 'Pasó mucho tiempo sin actividad. Recargá y probá de nuevo.'],
+      429: ['Vamos más despacio', 'Hiciste muchos pedidos seguidos. Esperá un momento.'],
+      500: ['Algo se rompió', 'Ya estamos en eso. Probá de nuevo en un rato.'],
+      503: ['Estamos de mantenimiento', 'Volvemos enseguida.'],
+    }
+    const texto = computed(() => TEXTOS[props.estado] ?? TEXTOS[500]);
+    const recargar = () => window.location.reload();
 </script>
 
 <template>

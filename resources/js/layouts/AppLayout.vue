@@ -1,15 +1,16 @@
 <script setup>
-import { computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
-import BottomNav from '@/components/BottomNav.vue'
-import Icono from '@/components/ui/Icono.vue'
+  import { computed } from 'vue';
+  import { usePage } from '@inertiajs/vue3';
+  import BottomNav from '@/components/BottomNav.vue';
+  import Icono from '@/components/ui/Icono.vue';
 
-const page = usePage()
-const aviso = computed(() => {
-  if (page.flash?.error) return { texto: page.flash.error, error: true }
-  if (page.flash?.exito) return { texto: page.flash.exito, error: false }
-  return null
-})
+  const page = usePage();
+  const aviso = computed(() => {
+    if (page.flash?.error) return { texto: page.flash.error, error: true };
+    if (page.flash?.exito) return { texto: page.flash.exito, error: false };
+    return null;
+  });
+
 </script>
 
 <template>

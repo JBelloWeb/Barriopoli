@@ -11,7 +11,6 @@ class SolicitudEmprendedor extends Model
 {
     protected $table = 'solicitudes_emprendedor';
 
-    // `tipo` y `estado` quedan fuera: nunca vienen del request.
     protected $fillable = ['nombre_emprendimiento', 'descripcion', 'enlace'];
 
     protected $attributes = ['estado' => 'pendiente', 'tipo' => 'alta'];

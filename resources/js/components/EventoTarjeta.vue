@@ -1,20 +1,18 @@
 <script setup>
-// Tarjeta de evento para listados (eventos, agenda, mis eventos).
-// Sin imagen: bloque violeta de marca con la onda y el ícono de la categoría.
-import { computed } from 'vue'
-import Onda from '@/components/marca/Onda.vue'
-import Insignia from '@/components/ui/Insignia.vue'
-import { pastillasEvento } from '@/lib/fechas'
-import { nombreLegible } from '@/lib/texto'
+  import { computed } from 'vue';
+  import Onda from '@/components/marca/Onda.vue';
+  import Insignia from '@/components/ui/Insignia.vue';
+  import { pastillasEvento } from '@/lib/fechas';
+  import { nombreLegible } from '@/lib/texto';
 
-const props = defineProps({
-  evento: { type: Object, required: true },
-  compacta: { type: Boolean, default: false }, // fila horizontal (agenda)
-})
-defineEmits(['abrir'])
+  const props = defineProps({
+    evento: { type: Object, required: true },
+    compacta: { type: Boolean, default: false }, 
+  });
+  defineEmits(['abrir']);
 
-const pastillas = computed(() => pastillasEvento(props.evento.inicio, props.evento.fin))
-const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
+  const pastillas = computed(() => pastillasEvento(props.evento.inicio, props.evento.fin));
+  const barrio = computed(() => nombreLegible(props.evento.barrio.nombre));
 </script>
 
 <template>
@@ -40,11 +38,11 @@ const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
         <span class="size-2.5 shrink-0 rounded-full" :style="{ backgroundColor: evento.categoria.color }" aria-hidden="true"></span>
         {{ evento.categoria.nombre }}
         <Insignia v-if="evento.cancelado" tono="cancelado" class="ml-auto">Cancelado</Insignia>
-        <!-- Acción propia (p. ej. quitar de la agenda): por encima del área tocable de la tarjeta. -->
+
         <span v-if="$slots.accion" class="relative z-10 -my-2 -mr-2" :class="{ 'ml-auto': !evento.cancelado }"><slot name="accion" /></span>
       </p>
       <h3 class="mt-1 text-lg font-bold leading-tight text-tinta" :class="compacta ? 'line-clamp-1' : 'line-clamp-2'">
-        <!-- Toda la tarjeta es tocable; el botón queda dentro del título para el lector de pantalla. -->
+
         <button type="button" class="text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none" @click="$emit('abrir', evento)">
           {{ evento.titulo }}
         </button>
@@ -55,7 +53,7 @@ const barrio = computed(() => nombreLegible(props.evento.barrio.nombre))
       </div>
       <p v-if="compacta" class="mt-1.5 truncate text-sm text-niebla-600">{{ evento.direccion }} · {{ barrio }}</p>
     </div>
-    <!-- Foco visible para toda la tarjeta (el botón estirado no lo muestra). -->
+
     <span class="pointer-events-none absolute inset-0 rounded-tarjeta ring-violeta-700 group-has-[:focus-visible]:ring-3" aria-hidden="true"></span>
   </article>
 </template>

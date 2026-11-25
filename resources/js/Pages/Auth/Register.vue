@@ -1,11 +1,11 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import CampoTexto from '@/components/CampoTexto.vue'
-import Boton from '@/components/ui/Boton.vue'
+  import { useForm } from '@inertiajs/vue3'
+  import AuthLayout from '@/layouts/AuthLayout.vue'
+  import CampoTexto from '@/components/CampoTexto.vue'
+  import Boton from '@/components/ui/Boton.vue'
 
-const form = useForm({ name: '', email: '', password: '', password_confirmation: '' })
-const enviar = () => form.post('/register', { onFinish: () => form.reset('password', 'password_confirmation') })
+  const form = useForm({ name: '', email: '', password: '', password_confirmation: '' })
+  const enviar = () => form.post('/register', { onFinish: () => form.reset('password', 'password_confirmation') })
 </script>
 
 <template>

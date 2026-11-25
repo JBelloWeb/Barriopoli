@@ -19,7 +19,6 @@ class SolicitudController extends Controller
         abort_unless($solicitud->estado === EstadoSolicitud::Pendiente, 409);
 
         $alta = $solicitud->tipo === TipoSolicitud::Alta;
-        // Un cambio de nombre solo tiene sentido si la persona sigue siendo emprendedor.
         abort_unless($alta || $solicitud->user->rol === Rol::Emprendedor, 409);
 
         DB::transaction(function () use ($request, $solicitud, $alta) {

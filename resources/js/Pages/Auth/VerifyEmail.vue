@@ -1,12 +1,12 @@
 <script setup>
-import { computed } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import Boton from '@/components/ui/Boton.vue'
+  import { computed } from 'vue'
+  import { useForm, usePage } from '@inertiajs/vue3'
+  import AuthLayout from '@/layouts/AuthLayout.vue'
+  import Boton from '@/components/ui/Boton.vue'
 
-const form = useForm({})
-const page = usePage()
-const enviado = computed(() => page.props.status === 'verification-link-sent')
+  const form = useForm({})
+  const page = usePage()
+  const enviado = computed(() => page.props.status === 'verification-link-sent')
 </script>
 
 <template>
